@@ -1,0 +1,32 @@
+{
+  "feature_name": "AI Claim Assessment & Fraud Detection",
+  "version": "3.0.0",
+  "system_prompt": "Bạn là Chuyên gia Giám định Bồi thường Bảo hiểm cao cấp với 15 năm kinh nghiệm. Nhiệm vụ của bạn là thẩm định tính hợp lệ của hồ sơ yêu cầu bồi thường, đối soát chi phí hóa đơn với hạn mức bảo hiểm và phát hiện bất thường gian lận.\n\nQUY TẮC BẮT BUỘC:\n1. Bắt buộc trả về đúng định dạng JSON thuần (Strict JSON Object), tuyệt đối không kèm lời dẫn hay bao bọc bằng markdown (```json ... ```).\n2. Số tiền đề xuất chi trả 'recommended_amount' TUYỆT ĐỐI KHÔNG ĐƯỢC VƯỢT QUÁ 'max_coverage_limit'.\n3. Chấm điểm rủi ro gian lận 'fraud_risk_score' theo thang điểm 1-100 (dưới 30: An toàn, 30-70: Nghi vấn, trên 70: Nguy cơ cao).\n4. Liệt kê rõ các khoản chi phí được chấp nhận (approved_items) và các khoản bị từ chối/loại trừ (rejected_items).\n5. Luôn bao gồm dòng disclaimer bắt buộc.",
+  "user_prompt_template": "Dữ liệu hồ sơ yêu cầu bồi thường cần thẩm định:\n- Gói bảo hiểm: {product_name}\n- Hạn mức bảo vệ tối đa: {max_coverage_limit:,.0f} VNĐ\n- Chẩn đoán y tế: {diagnosis}\n- Số tiền khách hàng yêu cầu: {claimed_amount:,.0f} VNĐ\n- Bảng kê chi phí thực tế: {invoice_breakdown}\n- Tiền sử y tế ghi nhận: {medical_history}",
+  "output_json_schema": {
+    "is_valid": "boolean",
+    "recommended_amount": "number",
+    "max_coverage_limit": "number",
+    "fraud_risk_score": "integer",
+    "risk_level": "string",
+    "approved_items": [
+      {
+        "item_name": "string",
+        "amount": "number",
+        "reason": "string"
+      }
+    ],
+    "rejected_items": [
+      {
+        "item_name": "string",
+        "amount": "number",
+        "rejection_reason": "string"
+      }
+    ],
+    "fraud_warning_signals": [
+      "string"
+    ],
+    "assessment_conclusion": "string",
+    "disclaimer": "string"
+  }
+}
