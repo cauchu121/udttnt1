@@ -212,6 +212,7 @@ function applyRolePermissions(role) {
   const navClaims = document.getElementById("navClaims");
   const navPolicies = document.getElementById("navPolicies");
   const navProducts = document.getElementById("navProducts");
+  const navPayPremium = document.getElementById("navPayPremium");
   const navFinance = document.getElementById("navFinance");
   const btnCreatePolicy = document.getElementById("btnCreatePolicy");
   const btnTopSubmitClaim = document.getElementById("btnTopSubmitClaim");
@@ -254,6 +255,7 @@ function applyRolePermissions(role) {
       navProducts.style.display = "flex";
       navProducts.innerHTML = `<i class="bi bi-box-seam-fill"></i> Bảng Quyền Lợi & Loại Trừ`;
     }
+    if (navPayPremium) navPayPremium.style.display = "none";
     if (navFinance) navFinance.style.display = "none"; // Giám định viên không làm kế toán
 
     if (btnTopSubmitClaim) btnTopSubmitClaim.style.display = "none";
@@ -285,9 +287,13 @@ function applyRolePermissions(role) {
       navProducts.style.display = "flex";
       navProducts.innerHTML = `<i class="bi bi-box-seam"></i> Khám Phá Gói Bảo Hiểm`;
     }
+    if (navPayPremium) {
+      navPayPremium.style.display = "flex";
+      navPayPremium.innerHTML = `<i class="bi bi-credit-card-2-front-fill"></i> Đóng Phí Bảo Hiểm`;
+    }
     if (navFinance) {
       navFinance.style.display = "flex";
-      navFinance.innerHTML = `<i class="bi bi-cash-stack"></i> Lịch Sử Đóng Phí Của Tôi`;
+      navFinance.innerHTML = `<i class="bi bi-clock-history"></i> Lịch Sử Nộp Phí`;
     }
 
     if (btnTopSubmitClaim) {
@@ -313,7 +319,6 @@ function applyRolePermissions(role) {
     }
 
     if (navDash) navDash.style.display = "none";
-    if (navFinance) navFinance.style.display = "none";
     if (navProducts) {
       navProducts.style.display = "flex";
       navProducts.innerHTML = `<i class="bi bi-stars"></i> Danh Mục Tư Vấn Bán Hàng`;
@@ -326,6 +331,11 @@ function applyRolePermissions(role) {
       navClaims.style.display = "flex";
       navClaims.innerHTML = `<i class="bi bi-file-earmark-medical"></i> Hồ Sơ Claim Khách Hàng`;
     }
+    if (navPayPremium) {
+      navPayPremium.style.display = "flex";
+      navPayPremium.innerHTML = `<i class="bi bi-credit-card-2-front-fill"></i> Thu Phí Hộ Khách`;
+    }
+    if (navFinance) navFinance.style.display = "none";
 
     if (btnTopSubmitClaim) {
       btnTopSubmitClaim.style.display = "inline-flex";
@@ -364,6 +374,10 @@ function applyRolePermissions(role) {
     if (navProducts) {
       navProducts.style.display = "flex";
       navProducts.innerHTML = `<i class="bi bi-box-seam-fill"></i> Danh Mục Sản Phẩm`;
+    }
+    if (navPayPremium) {
+      navPayPremium.style.display = "flex";
+      navPayPremium.innerHTML = `<i class="bi bi-credit-card-2-front-fill"></i> Thu Phí Bảo Hiểm`;
     }
     if (navFinance) {
       navFinance.style.display = "flex";
@@ -428,7 +442,8 @@ function switchTab(tabId) {
     claims: "Quản Lý & Thẩm Định Yêu Cầu Bồi Thường (Claims)",
     policies: "Quản Lý Danh Sách Hợp Đồng Bảo Hiểm",
     products: "Danh Mục Các Gói Sản Phẩm Bảo Hiểm",
-    finance: "Quản Lý Thu Phí Bảo Hiểm Định Kỳ",
+    "pay-premium": "Đóng Phí Bảo Hiểm Trực Tuyến",
+    finance: "Lịch Sử & Nhật Ký Nộp Phí Bảo Hiểm",
     chatbot: "Trợ Lý Ảo AI Advisor - Tư Vấn Quyền Lợi & Điều Khoản"
   };
 
@@ -437,6 +452,7 @@ function switchTab(tabId) {
     claims: "Tiếp nhận hồ sơ bồi thường, đối soát viện phí y tế với điều khoản và phê duyệt chi trả.",
     policies: "Theo dõi thời hạn hiệu lực, hạn mức bảo vệ tối đa và chu kỳ đóng phí định kỳ.",
     products: "Chi tiết quyền lợi bảo hiểm, hạn mức chi trả tối đa và biểu phí thường niên chuẩn.",
+    "pay-premium": "Nộp phí bảo hiểm định kỳ nhanh chóng qua Chuyển khoản QR VietQR, Ví MoMo hoặc Cổng VNPAY.",
     finance: "Nhật ký thanh toán phí bảo hiểm theo kỳ và lịch sử giao dịch khách hàng.",
     chatbot: "Tư vấn gói bảo hiểm tối ưu, giải đáp quy tắc quyền lợi và điều khoản loại trừ 24/7."
   };
@@ -448,6 +464,7 @@ function switchTab(tabId) {
   if (tabId === "claims") loadClaims();
   if (tabId === "policies") loadPolicies();
   if (tabId === "products") loadProducts();
+  if (tabId === "pay-premium") loadPayPremiumView();
   if (tabId === "finance") loadPayments();
 }
 
@@ -465,6 +482,7 @@ async function refreshCurrentTab() {
     else if (tabId === "claims") await loadClaims();
     else if (tabId === "policies") await loadPolicies();
     else if (tabId === "products") await loadProducts();
+    else if (tabId === "pay-premium") await loadPayPremiumView();
     else if (tabId === "finance") await loadPayments();
     else if (tabId === "chatbot") {
       showToast("Kênh Trợ lý AI Advisor luôn kết nối trực tuyến sẵn sàng!");
@@ -487,6 +505,7 @@ async function refreshCurrentTab() {
       claims: "Danh sách hồ sơ bồi thường (Claims)",
       policies: "Danh sách hợp đồng bảo hiểm",
       products: "Danh mục các gói sản phẩm",
+      "pay-premium": "Cổng nộp phí bảo hiểm trực tuyến",
       finance: "Nhật ký thu phí định kỳ",
       chatbot: "Trợ lý AI Advisor"
     };
@@ -1644,7 +1663,207 @@ function askAiAboutThisProduct() {
   }
 }
 
-// 6. THU PHÍ ĐỊNH KỲ
+// =============================================================================
+// 6. ĐÓNG PHÍ BẢO HIỂM TRỰC TUYẾN (PAY PREMIUM TAB)
+// =============================================================================
+let cachedPayPolicies = [];
+let currentPaymentMethod = "BANK_TRANSFER";
+
+async function loadPayPremiumView() {
+  const select = document.getElementById("payPolicySelect");
+  if (!select) return;
+
+  select.innerHTML = `<option value="">-- Đang nạp danh sách hợp đồng... --</option>`;
+
+  try {
+    const res = await fetch(`${API_BASE}/policies`, {
+      headers: { "Authorization": `Bearer ${currentToken}` }
+    });
+    if (!res.ok) throw new Error("Không thể tải danh sách hợp đồng");
+    const policies = await res.json();
+    cachedPayPolicies = policies;
+
+    select.innerHTML = "";
+    if (policies.length === 0) {
+      select.innerHTML = `<option value="">Bạn chưa có hợp đồng bảo hiểm nào</option>`;
+      const infoBox = document.getElementById("payPolicyInfoBox");
+      if (infoBox) infoBox.style.display = "none";
+      return;
+    }
+
+    policies.forEach(p => {
+      const isAgentOrAdmin = currentUser && (currentUser.role === "agent" || currentUser.role === "admin");
+      const label = isAgentOrAdmin
+        ? `${p.policy_number} - KH: ${p.customer_name || 'Khách'} - ${p.product_name}`
+        : `${p.policy_number} - ${p.product_name} (${formatVND(p.premium_amount)}/kỳ)`;
+      const opt = document.createElement("option");
+      opt.value = p.id;
+      opt.textContent = label;
+      select.appendChild(opt);
+    });
+
+    onPayPolicySelected();
+
+  } catch (err) {
+    showToast("Lỗi nạp hợp đồng nộp phí: " + err.message, "error");
+  }
+}
+
+function onPayPolicySelected() {
+  const select = document.getElementById("payPolicySelect");
+  const infoBox = document.getElementById("payPolicyInfoBox");
+  if (!select || !infoBox) return;
+
+  const policyId = parseInt(select.value);
+  const found = cachedPayPolicies.find(p => p.id === policyId);
+
+  if (!found) {
+    infoBox.style.display = "none";
+    return;
+  }
+
+  infoBox.style.display = "flex";
+  document.getElementById("payInfoProduct").textContent = found.product_name || "Gói Bảo Hiểm";
+  document.getElementById("payInfoCustomer").textContent = found.customer_name || (currentUser ? currentUser.full_name : "Khách hàng");
+  document.getElementById("payInfoSumInsured").textContent = formatVND(found.total_sum_insured);
+  
+  const startDateStr = new Date(found.start_date).toLocaleDateString('vi-VN');
+  const endDateStr = new Date(found.end_date).toLocaleDateString('vi-VN');
+  document.getElementById("payInfoValidity").textContent = `${startDateStr} - ${endDateStr}`;
+
+  // Đặt số tiền phí
+  const amountInput = document.getElementById("payAmountInput");
+  if (amountInput) {
+    amountInput.value = formatNumberWithDots(found.premium_amount);
+  }
+
+  updatePaymentQrCode();
+}
+
+function onPayPeriodChange() {
+  const period = document.getElementById("payPeriodSelect").value;
+  const select = document.getElementById("payPolicySelect");
+  const amountInput = document.getElementById("payAmountInput");
+  if (!select || !amountInput) return;
+
+  const policyId = parseInt(select.value);
+  const found = cachedPayPolicies.find(p => p.id === policyId);
+  if (!found) return;
+
+  let fee = found.premium_amount;
+  if (period.includes("Quý")) {
+    fee = Math.round(found.premium_amount * 0.27);
+  } else if (period.includes("Tháng")) {
+    fee = Math.round(found.premium_amount * 0.095);
+  }
+  amountInput.value = formatNumberWithDots(fee);
+  updatePaymentQrCode();
+}
+
+function selectPaymentMethod(method) {
+  currentPaymentMethod = method;
+  document.querySelectorAll(".payment-method-selector .method-card").forEach(c => c.classList.remove("active"));
+  const card = document.getElementById(`methodCard_${method === 'BANK_TRANSFER' ? 'BANK' : method}`);
+  if (card) card.classList.add("active");
+
+  const accNumEl = document.getElementById("qrAccountNumber");
+  if (method === "BANK_TRANSFER") {
+    if (accNumEl) accNumEl.textContent = "8888 6666 9999 (MB Bank)";
+  } else if (method === "MOMO") {
+    if (accNumEl) accNumEl.textContent = "0988 777 666 (Ví MoMo)";
+  } else if (method === "VNPAY") {
+    if (accNumEl) accNumEl.textContent = "VNPAY-INSURTECH-GATEWAY";
+  }
+
+  updatePaymentQrCode();
+}
+
+function updatePaymentQrCode() {
+  const select = document.getElementById("payPolicySelect");
+  const amountInput = document.getElementById("payAmountInput");
+  const qrImg = document.getElementById("qrDisplayImage");
+  const qrAmount = document.getElementById("qrDisplayAmount");
+  const qrMemo = document.getElementById("qrDisplayMemo");
+
+  if (!select || !amountInput) return;
+
+  const policyId = parseInt(select.value);
+  const found = cachedPayPolicies.find(p => p.id === policyId);
+  const polNum = found ? found.policy_number : "POL-2026";
+  const amount = parseNumberFromDots(amountInput.value);
+
+  if (qrAmount) qrAmount.textContent = formatVND(amount);
+  const memoText = `DONGPHI ${polNum}`;
+  if (qrMemo) qrMemo.textContent = memoText;
+
+  // Tạo URL QR Code tương thích
+  if (qrImg) {
+    const qrData = encodeURIComponent(`https://payment.insurtech.vn/pay?policy=${polNum}&amount=${amount}&memo=${memoText}`);
+    qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${qrData}`;
+  }
+}
+
+async function handlePayPremiumSubmit() {
+  const select = document.getElementById("payPolicySelect");
+  const policyId = parseInt(select.value);
+  const period = document.getElementById("payPeriodSelect").value;
+  const amount = parseNumberFromDots(document.getElementById("payAmountInput").value);
+  const btn = document.getElementById("btnSubmitPayPremium");
+  const origBtnHtml = btn ? btn.innerHTML : "";
+
+  if (!policyId) {
+    showToast("Vui lòng chọn hợp đồng bảo hiểm cần đóng phí!", "error");
+    return;
+  }
+  if (isNaN(amount) || amount <= 0) {
+    showToast("Vui lòng nhập số tiền nộp phí hợp lệ!", "error");
+    return;
+  }
+
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Đang xử lý thanh toán...`;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/finance/payments`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${currentToken}`
+      },
+      body: JSON.stringify({
+        policy_id: policyId,
+        period_name: period,
+        amount: amount,
+        payment_method: currentPaymentMethod
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.detail || "Đóng phí bảo hiểm thất bại");
+    }
+
+    const newPayment = await res.json();
+    showToast(`Đóng phí thành công cho hợp đồng ${newPayment.policy_number || ''}! Mã giao dịch: ${newPayment.payment_code}`, "success");
+
+    // Tự động chuyển sang tab Lịch sử đóng phí để hiển thị giao dịch mới
+    setTimeout(() => {
+      switchTab("finance");
+    }, 700);
+
+  } catch (err) {
+    showToast(err.message, "error");
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = origBtnHtml;
+    }
+  }
+}
+
+// 7. LỊCH SỬ NỘP PHÍ BẢO HIỂM
 async function loadPayments() {
   try {
     const res = await fetch(`${API_BASE}/finance/payments`, {

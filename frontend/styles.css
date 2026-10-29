@@ -2230,3 +2230,185 @@ select.form-input option, select.select-input option {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* ========================================================================= */
+/* TAB: ĐÓNG PHÍ BẢO HIỂM TRỰC TUYẾN (PAY PREMIUM TAB)                       */
+/* ========================================================================= */
+.pay-premium-wrapper {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.pay-policy-info-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid var(--primary);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pay-policy-info-box .info-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+}
+
+.pay-policy-info-box .info-label {
+  color: var(--text-muted);
+}
+
+.payment-method-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.method-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.method-card:hover {
+  border-color: var(--primary);
+  background: #f0fdf4;
+}
+
+.method-card.active {
+  border-color: var(--primary);
+  background: #ecfdf5;
+  box-shadow: 0 0 0 1.5px rgba(22, 163, 74, 0.2);
+}
+
+.method-icon {
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.method-text strong {
+  display: block;
+  font-size: 13.5px;
+  color: var(--secondary);
+}
+
+.method-text small {
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+/* Khung VietQR Thẻ Ngân Hàng */
+.vietqr-frame {
+  background: #ffffff;
+  border: 2px solid #0284c7;
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: var(--shadow-md);
+  position: relative;
+  overflow: hidden;
+}
+
+.vietqr-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px dashed #cbd5e1;
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+}
+
+.bank-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bank-brand strong {
+  font-size: 14px;
+  color: #0369a1;
+  letter-spacing: 0.5px;
+}
+
+.qr-tag {
+  background: #e0f2fe;
+  color: #0284c7;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.qr-image-wrapper {
+  position: relative;
+  display: inline-block;
+  padding: 8px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.qr-img {
+  width: 210px;
+  height: 210px;
+  display: block;
+  border-radius: 8px;
+}
+
+.qr-center-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #ffffff;
+  border-radius: 50%;
+  padding: 4px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  font-size: 20px;
+}
+
+.vietqr-details {
+  background: #f8fafc;
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.qr-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+.qr-transfer-memo {
+  background: #e2e8f0;
+  color: #0f172a;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+@media (max-width: 900px) {
+  .pay-premium-wrapper {
+    grid-template-columns: 1fr;
+  }
+}

@@ -133,6 +133,9 @@
         <button class="nav-item" id="navProducts" data-tab="products" onclick="switchTab('products')">
           <i class="bi bi-box-seam-fill"></i> Gói Sản Phẩm
         </button>
+        <button class="nav-item" id="navPayPremium" data-tab="pay-premium" onclick="switchTab('pay-premium')">
+          <i class="bi bi-credit-card-2-front-fill"></i> Đóng Phí Bảo Hiểm
+        </button>
         <button class="nav-item" id="navFinance" data-tab="finance" onclick="switchTab('finance')">
           <i class="bi bi-cash-stack"></i> Thu Phí Định Kỳ
         </button>
@@ -327,6 +330,157 @@
       <section class="tab-pane" id="tab-products">
         <div class="products-grid" id="productsGridContainer">
           <!-- Dynamic product cards -->
+        </div>
+      </section>
+
+      <!-- TAB 4.5: ĐÓNG PHÍ BẢO HIỂM TRỰC TUYẾN -->
+      <section class="tab-pane" id="tab-pay-premium">
+        <div class="pay-premium-wrapper">
+          <!-- Cột Trái: Chọn hợp đồng và cấu hình nộp phí -->
+          <div class="content-card pay-form-card">
+            <div class="card-header">
+              <h3><i class="bi bi-credit-card-2-front-fill text-success"></i> Đóng Phí Bảo Hiểm Trực Tuyến</h3>
+              <p>Chọn hợp đồng bảo hiểm và phương thức thanh toán để nộp phí định kỳ / gia hạn tức thì.</p>
+            </div>
+            <div class="card-body">
+              <form id="payPremiumForm" onsubmit="event.preventDefault(); handlePayPremiumSubmit();">
+                
+                <!-- 1. Chọn hợp đồng -->
+                <div class="form-group mb-3">
+                  <label class="form-label fw-bold">Chọn Hợp Đồng Cần Đóng Phí *</label>
+                  <select id="payPolicySelect" class="form-input" required onchange="onPayPolicySelected()">
+                    <option value="">-- Đang nạp danh sách hợp đồng... --</option>
+                  </select>
+                </div>
+
+                <!-- Thông tin chi tiết hợp đồng được chọn -->
+                <div class="pay-policy-info-box mb-3" id="payPolicyInfoBox" style="display: none;">
+                  <div class="info-row">
+                    <span class="info-label"><i class="bi bi-shield-check text-success"></i> Gói sản phẩm:</span>
+                    <strong id="payInfoProduct" class="text-success">-</strong>
+                  </div>
+                  <div class="info-row">
+                    <span class="info-label"><i class="bi bi-person"></i> Khách hàng thụ hưởng:</span>
+                    <strong id="payInfoCustomer">-</strong>
+                  </div>
+                  <div class="info-row">
+                    <span class="info-label"><i class="bi bi-cash-stack"></i> Hạn mức bảo vệ:</span>
+                    <strong id="payInfoSumInsured">-</strong>
+                  </div>
+                  <div class="info-row">
+                    <span class="info-label"><i class="bi bi-calendar3"></i> Thời hạn hiệu lực:</span>
+                    <span id="payInfoValidity" class="text-muted">-</span>
+                  </div>
+                </div>
+
+                <!-- 2. Kỳ nộp phí & Số tiền -->
+                <div class="form-row mb-3">
+                  <div class="form-group flex-1">
+                    <label class="form-label fw-bold">Kỳ nộp phí *</label>
+                    <select id="payPeriodSelect" class="form-input" onchange="onPayPeriodChange()">
+                      <option value="Kỳ Thường Niên Năm 2026">Kỳ Thường Niên Năm 2026</option>
+                      <option value="Kỳ Quý 1 / 2026">Kỳ Quý 1 / 2026</option>
+                      <option value="Kỳ Quý 2 / 2026">Kỳ Quý 2 / 2026</option>
+                      <option value="Kỳ Tháng Tiếp Theo">Kỳ Tháng Tiếp Theo</option>
+                      <option value="Kỳ Tái Tục Năm 2027">Kỳ Tái Tục Năm 2027</option>
+                    </select>
+                  </div>
+                  <div class="form-group flex-1">
+                    <label class="form-label fw-bold">Số tiền nộp phí (VNĐ) *</label>
+                    <input type="text" inputmode="numeric" id="payAmountInput" class="form-input fw-bold text-success" required oninput="formatCurrencyInput(this); updatePaymentQrCode();" placeholder="3.500.000">
+                  </div>
+                </div>
+
+                <!-- 3. Phương thức thanh toán -->
+                <div class="form-group mb-3">
+                  <label class="form-label fw-bold">Chọn phương thức thanh toán *</label>
+                  <div class="payment-method-selector">
+                    <div class="method-card active" id="methodCard_BANK" onclick="selectPaymentMethod('BANK_TRANSFER')">
+                      <div class="method-icon"><i class="bi bi-qr-code text-primary"></i></div>
+                      <div class="method-text">
+                        <strong>Chuyển khoản QR (VietQR)</strong>
+                        <small>Xác nhận tự động 24/7 tức thì</small>
+                      </div>
+                    </div>
+
+                    <div class="method-card" id="methodCard_MOMO" onclick="selectPaymentMethod('MOMO')">
+                      <div class="method-icon"><i class="bi bi-wallet2 text-danger"></i></div>
+                      <div class="method-text">
+                        <strong>Ví điện tử MoMo</strong>
+                        <small>Thanh toán qua App MoMo</small>
+                      </div>
+                    </div>
+
+                    <div class="method-card" id="methodCard_VNPAY" onclick="selectPaymentMethod('VNPAY')">
+                      <div class="method-icon"><i class="bi bi-credit-card-fill text-info"></i></div>
+                      <div class="method-text">
+                        <strong>Cổng VNPAY / Thẻ ATM</strong>
+                        <small>Thẻ ATM nội địa & Quốc tế</small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Nút xác nhận thanh toán -->
+                <button type="submit" class="btn btn-primary btn-block btn-lg mt-3" id="btnSubmitPayPremium">
+                  <i class="bi bi-check-circle-fill"></i> Xác Nhận Đã Đóng Phí
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Cột Phải: Khung Quét Mã VietQR & Hướng dẫn thanh toán trực quan -->
+          <div class="content-card pay-qr-card">
+            <div class="card-header">
+              <h3><i class="bi bi-qr-code-scan text-success"></i> Quét Mã Thanh Toán Nhanh</h3>
+              <span class="badge badge-success"><i class="bi bi-shield-check"></i> An toàn 100%</span>
+            </div>
+            <div class="card-body text-center">
+              <div class="vietqr-frame">
+                <div class="vietqr-header">
+                  <div class="bank-brand">
+                    <i class="bi bi-bank fs-4 text-primary"></i>
+                    <div>
+                      <strong>MB BANK</strong>
+                      <small class="d-block text-muted">Ngân hàng TMCP Quân Đội</small>
+                    </div>
+                  </div>
+                  <span class="qr-tag">VietQR Pro 24/7</span>
+                </div>
+
+                <!-- QR Code Box -->
+                <div class="qr-image-wrapper">
+                  <img id="qrDisplayImage" src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=INSURTECH-PAYMENT" alt="Mã QR thanh toán" class="qr-img">
+                  <div class="qr-center-icon"><i class="bi bi-shield-fill-check text-success"></i></div>
+                </div>
+
+                <div class="vietqr-details mt-3 text-start">
+                  <div class="qr-detail-row">
+                    <span class="text-muted">Chủ tài khoản:</span>
+                    <strong>CTCP BẢO HIỂM INSURTECH VIỆT NAM</strong>
+                  </div>
+                  <div class="qr-detail-row">
+                    <span class="text-muted">Số tài khoản:</span>
+                    <strong class="text-primary fs-5" id="qrAccountNumber">8888 6666 9999</strong>
+                  </div>
+                  <div class="qr-detail-row">
+                    <span class="text-muted">Số tiền nộp:</span>
+                    <strong class="text-success fs-5" id="qrDisplayAmount">3.500.000 VNĐ</strong>
+                  </div>
+                  <div class="qr-detail-row">
+                    <span class="text-muted">Nội dung chuyển khoản:</span>
+                    <code class="qr-transfer-memo" id="qrDisplayMemo">DONGPHI POL-2026-HLT-001</code>
+                  </div>
+                </div>
+              </div>
+
+              <div class="pay-notes mt-3">
+                <small class="text-muted">
+                  <i class="bi bi-info-circle text-primary"></i> Sau khi hoàn tất chuyển khoản, bấm nút <strong>"Xác Nhận Đã Đóng Phí"</strong> để hệ thống cập nhật lịch sử và gia hạn bảo hiểm ngay lập tức.
+                </small>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
