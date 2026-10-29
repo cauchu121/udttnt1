@@ -200,9 +200,10 @@ def issue_policy(
         policy_id=new_policy.id,
         period_name=f"Kỳ 1 ({cycle_name})",
         amount=premium,
-        payment_method="BANK_TRANSFER",
+        payment_method=policy_in.payment_method or "BANK_TRANSFER",
         payment_date=datetime.datetime.utcnow(),
-        status="PAID"
+        status="PAID",
+        receipt_image=policy_in.receipt_image
     )
     db.add(initial_payment)
     db.commit()

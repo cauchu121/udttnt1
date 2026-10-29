@@ -75,6 +75,8 @@ class PolicyCreate(BaseModel):
     total_sum_insured: Optional[float] = None
     premium_amount: Optional[float] = None
     payment_cycle: str = "ANNUALLY"
+    payment_method: Optional[str] = "BANK_TRANSFER"
+    receipt_image: Optional[str] = None
 
 class PolicyResponse(PolicyBase):
     id: int

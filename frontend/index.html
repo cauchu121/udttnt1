@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-  <link rel="stylesheet" href="styles.css?v=2.2">
+  <link rel="stylesheet" href="styles.css?v=2.3">
 </head>
 <body>
 
@@ -135,9 +135,6 @@
         </button>
         <button class="nav-item" id="navProducts" data-tab="products" onclick="switchTab('products')">
           <i class="bi bi-box-seam-fill"></i> Gói Sản Phẩm
-        </button>
-        <button class="nav-item" id="navPayPremium" data-tab="pay-premium" onclick="switchTab('pay-premium')">
-          <i class="bi bi-credit-card-2-front-fill"></i> Đóng Phí Bảo Hiểm
         </button>
         <button class="nav-item" id="navFinance" data-tab="finance" onclick="switchTab('finance')">
           <i class="bi bi-cash-stack"></i> Thu Phí Định Kỳ
@@ -333,215 +330,6 @@
       <section class="tab-pane" id="tab-products">
         <div class="products-grid" id="productsGridContainer">
           <!-- Dynamic product cards -->
-        </div>
-      </section>
-
-      <!-- TAB 4.5: ĐÓNG PHÍ BẢO HIỂM TRỰC TUYẾN -->
-      <section class="tab-pane" id="tab-pay-premium">
-        <div class="pay-premium-wrapper">
-          <!-- Cột Trái: Chọn hợp đồng và cấu hình nộp phí -->
-          <div class="content-card pay-form-card">
-            <div class="card-header">
-              <h3><i class="bi bi-credit-card-2-front-fill text-success"></i> Đóng Phí Bảo Hiểm Trực Tuyến</h3>
-              <p>Chọn hợp đồng bảo hiểm và phương thức thanh toán để nộp phí định kỳ / gia hạn tức thì.</p>
-            </div>
-            <div class="card-body">
-              <form id="payPremiumForm" onsubmit="event.preventDefault(); handlePayPremiumSubmit();">
-                
-                <!-- 1. Chọn hợp đồng -->
-                <div class="form-group mb-3">
-                  <label class="form-label fw-bold">Chọn Hợp Đồng Cần Đóng Phí *</label>
-                  <select id="payPolicySelect" class="form-input" required onchange="onPayPolicySelected()">
-                    <option value="">-- Đang nạp danh sách hợp đồng... --</option>
-                  </select>
-                </div>
-
-                <!-- Thông tin chi tiết hợp đồng được chọn -->
-                <div class="pay-policy-info-box mb-3" id="payPolicyInfoBox" style="display: none;">
-                  <div class="info-row">
-                    <span class="info-label"><i class="bi bi-shield-check text-success"></i> Gói sản phẩm:</span>
-                    <strong id="payInfoProduct" class="text-success">-</strong>
-                  </div>
-                  <div class="info-row">
-                    <span class="info-label"><i class="bi bi-person"></i> Khách hàng thụ hưởng:</span>
-                    <strong id="payInfoCustomer">-</strong>
-                  </div>
-                  <div class="info-row">
-                    <span class="info-label"><i class="bi bi-cash-stack"></i> Hạn mức bảo vệ:</span>
-                    <strong id="payInfoSumInsured">-</strong>
-                  </div>
-                  <div class="info-row">
-                    <span class="info-label"><i class="bi bi-calendar3"></i> Thời hạn hiệu lực:</span>
-                    <span id="payInfoValidity" class="text-muted">-</span>
-                  </div>
-                </div>
-
-                <!-- 2. Kỳ nộp phí & Số tiền -->
-                <div class="form-row mb-3">
-                  <div class="form-group flex-1">
-                    <label class="form-label fw-bold">Kỳ nộp phí *</label>
-                    <select id="payPeriodSelect" class="form-input" onchange="onPayPeriodChange()">
-                      <option value="Kỳ Thường Niên Năm 2026">Kỳ Thường Niên Năm 2026</option>
-                      <option value="Kỳ Quý 1 / 2026">Kỳ Quý 1 / 2026</option>
-                      <option value="Kỳ Quý 2 / 2026">Kỳ Quý 2 / 2026</option>
-                      <option value="Kỳ Tháng Tiếp Theo">Kỳ Tháng Tiếp Theo</option>
-                      <option value="Kỳ Tái Tục Năm 2027">Kỳ Tái Tục Năm 2027</option>
-                    </select>
-                  </div>
-                  <div class="form-group flex-1">
-                    <label class="form-label fw-bold">Số tiền nộp phí (VNĐ) *</label>
-                    <input type="text" inputmode="numeric" id="payAmountInput" class="form-input fw-bold text-success" required oninput="formatCurrencyInput(this); updatePaymentQrCode();" placeholder="3.500.000">
-                  </div>
-                </div>
-
-                <!-- 3. Phương thức thanh toán -->
-                <div class="form-group mb-3">
-                  <label class="form-label fw-bold">Chọn phương thức thanh toán *</label>
-                  <div class="payment-method-selector">
-                    <div class="method-card active" id="methodCard_BANK" onclick="selectPaymentMethod('BANK_TRANSFER')">
-                      <div class="method-icon"><i class="bi bi-qr-code text-primary"></i></div>
-                      <div class="method-text">
-                        <strong>Chuyển khoản QR (VietQR)</strong>
-                        <small>Xác nhận tự động 24/7 tức thì</small>
-                      </div>
-                    </div>
-
-                    <div class="method-card" id="methodCard_MOMO" onclick="selectPaymentMethod('MOMO')">
-                      <div class="method-icon"><i class="bi bi-wallet2 text-danger"></i></div>
-                      <div class="method-text">
-                        <strong>Ví điện tử MoMo</strong>
-                        <small>Thanh toán qua App MoMo</small>
-                      </div>
-                    </div>
-
-                    <div class="method-card" id="methodCard_VNPAY" onclick="selectPaymentMethod('VNPAY')">
-                      <div class="method-icon"><i class="bi bi-credit-card-fill text-info"></i></div>
-                      <div class="method-text">
-                        <strong>Cổng VNPAY / Thẻ ATM</strong>
-                        <small>Thẻ ATM nội địa & Quốc tế</small>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Nút xác nhận thanh toán -->
-                <button type="submit" class="btn btn-primary btn-block btn-lg mt-3" id="btnSubmitPayPremium">
-                  <i class="bi bi-check-circle-fill"></i> Xác Nhận Đã Đóng Phí
-                </button>
-              </form>
-            </div>
-          </div>
-
-          <!-- Cột Phải: Khung Quét Mã VietQR & Hướng dẫn thanh toán trực quan -->
-          <div class="content-card pay-qr-card">
-            <div class="card-header">
-              <h3><i class="bi bi-qr-code-scan text-success"></i> Quét Mã Thanh Toán Nhanh</h3>
-              <span class="badge badge-success"><i class="bi bi-shield-check"></i> An toàn 100%</span>
-            </div>
-            <div class="card-body text-center">
-              <div class="vietqr-frame">
-                <div class="vietqr-header">
-                  <div class="bank-brand">
-                    <i class="bi bi-bank fs-4 text-primary"></i>
-                    <div>
-                      <strong>MB BANK</strong>
-                      <small class="d-block text-muted">Ngân hàng TMCP Quân Đội</small>
-                    </div>
-                  </div>
-                  <span class="qr-tag">VietQR Pro 24/7</span>
-                </div>
-
-                <!-- QR Code & Upload Biên Lai Chuyển Khoản (Bên cạnh nhau) -->
-                <div class="qr-and-upload-row">
-                  <!-- Cột Trái: Mã QR Thanh Toán -->
-                  <div class="qr-col">
-                    <div class="media-col-header">
-                      <i class="bi bi-qr-code text-primary"></i> <span>Mã QR Thanh Toán</span>
-                    </div>
-                    <div class="qr-image-wrapper">
-                      <img id="qrDisplayImage" src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=INSURTECH-PAYMENT" alt="Mã QR thanh toán" class="qr-img">
-                      <div class="qr-center-icon"><i class="bi bi-shield-fill-check text-success"></i></div>
-                    </div>
-                    <small class="media-col-note"><i class="bi bi-phone"></i> Quét mã qua App Ngân hàng</small>
-                  </div>
-
-                  <!-- Cột Phải: Tải Ảnh Biên Lai / Hóa Đơn Chuyển Khoản (Bên Cạnh Mã QR) -->
-                  <div class="receipt-upload-col">
-                    <div class="media-col-header">
-                      <i class="bi bi-receipt text-success"></i> <span>Tải Ảnh Biên Lai Giao Dịch</span>
-                    </div>
-                    
-                    <div class="receipt-dropzone" id="receiptDropzone" onclick="triggerReceiptFileInput()">
-                      <input type="file" id="payReceiptFileInput" accept="image/*" style="display: none;" onchange="handleReceiptFileSelect(event)">
-                      
-                      <!-- Chưa chọn ảnh -->
-                      <div class="dropzone-empty" id="receiptDropzoneEmpty">
-                        <div class="upload-icon-circle">
-                          <i class="bi bi-cloud-arrow-up-fill"></i>
-                        </div>
-                        <strong>Tải Ảnh Biên Lai</strong>
-                        <p>Nhấp chọn ảnh hoặc kéo thả ảnh chụp bill chuyển khoản vào đây</p>
-                        <span class="upload-tip-pill"><i class="bi bi-image"></i> Hỗ trợ PNG, JPG, JPEG</span>
-                      </div>
-
-                      <!-- Đã tải ảnh lên (Preview) -->
-                      <div class="dropzone-preview" id="receiptDropzonePreview" style="display: none;">
-                        <div class="preview-img-container">
-                          <img id="receiptPreviewThumb" src="" alt="Ảnh biên lai" class="preview-thumb-img">
-                          <div class="preview-overlay">
-                            <button type="button" class="btn-preview-zoom" onclick="event.stopPropagation(); viewReceiptZoom();" title="Xem ảnh phóng to">
-                              <i class="bi bi-zoom-in"></i> Phóng to
-                            </button>
-                          </div>
-                        </div>
-                        <div class="preview-meta">
-                          <div class="preview-file-name" id="receiptPreviewName">bienlai.png</div>
-                          <span class="badge badge-success" style="font-size: 10px; padding: 2px 6px;"><i class="bi bi-check2-circle"></i> Đã chọn</span>
-                        </div>
-                        <div class="preview-actions">
-                          <button type="button" class="btn btn-xs btn-outline-danger" onclick="event.stopPropagation(); removeReceiptImage();">
-                            <i class="bi bi-trash"></i> Đổi ảnh khác
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                    <small class="media-col-note"><i class="bi bi-shield-check text-success"></i> Đính kèm minh chứng đóng phí</small>
-                  </div>
-                </div>
-
-                <div class="vietqr-details mt-3 text-start">
-                  <div class="qr-detail-row">
-                    <span class="text-muted">Chủ tài khoản:</span>
-                    <strong>CTCP BẢO HIỂM INSURTECH VIỆT NAM</strong>
-                  </div>
-                  <div class="qr-detail-row">
-                    <span class="text-muted">Số tài khoản:</span>
-                    <strong class="text-primary fs-5" id="qrAccountNumber">8888 6666 9999</strong>
-                  </div>
-                  <div class="qr-detail-row">
-                    <span class="text-muted">Số tiền nộp:</span>
-                    <strong class="text-success fs-5" id="qrDisplayAmount">3.500.000 VNĐ</strong>
-                  </div>
-                  <div class="qr-detail-row">
-                    <span class="text-muted">Nội dung chuyển khoản:</span>
-                    <code class="qr-transfer-memo" id="qrDisplayMemo">DONGPHI POL-2026-HLT-001</code>
-                  </div>
-                  <div class="qr-detail-row">
-                    <span class="text-muted">Biên lai đính kèm:</span>
-                    <span id="qrDetailReceiptStatus" class="text-muted" style="font-size: 12px;">
-                      <i class="bi bi-dash-circle"></i> Chưa đính kèm (không bắt buộc)
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="pay-notes mt-3">
-                <small class="text-muted">
-                  <i class="bi bi-info-circle text-primary"></i> Sau khi hoàn tất chuyển khoản, bấm nút <strong>"Xác Nhận Đã Đóng Phí"</strong> để hệ thống cập nhật lịch sử và gia hạn bảo hiểm ngay lập tức.
-                </small>
-              </div>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -835,112 +623,288 @@
     </div>
   </div>
 
-  <!-- MODAL: CẤP HỢP ĐỒNG BẢO HIỂM MỚI -->
+  <!-- MODAL: CẤP HỢP ĐỒNG BẢO HIỂM MỚI (TÍCH HỢP QUY TRÌNH ĐÓNG PHÍ KHI BẤM PHÁT HÀNH) -->
   <div class="modal-overlay" id="createPolicyModal">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-lg">
       <div class="modal-header modal-header-green">
         <div class="header-title-group">
           <i class="bi bi-journal-plus"></i>
           <div>
-            <h3>Cấp Hợp Đồng Bảo Hiểm Mới</h3>
-            <small>Điền thông tin và liên kết khách hàng thụ hưởng</small>
+            <h3 id="createPolicyModalTitle">Cấp Hợp Đồng Bảo Hiểm Mới</h3>
+            <small id="createPolicyModalSubtitle">Điền thông tin và liên kết khách hàng thụ hưởng</small>
           </div>
         </div>
         <button class="btn-close" onclick="closeCreatePolicyModal()">&times;</button>
       </div>
+
+      <!-- Step Tracker Header -->
+      <div class="policy-wizard-steps">
+        <div class="wizard-step active" id="wizardStep1Indicator">
+          <span class="step-num">1</span>
+          <span class="step-text">Thông Tin Hợp Đồng</span>
+        </div>
+        <div class="wizard-step-line" id="wizardStepLine"></div>
+        <div class="wizard-step" id="wizardStep2Indicator">
+          <span class="step-num">2</span>
+          <span class="step-text">Đóng Phí Bảo Hiểm</span>
+        </div>
+      </div>
+
       <div class="modal-body">
-        <form id="createPolicyForm" onsubmit="event.preventDefault(); handleCreatePolicySubmit();">
-          <!-- Khách hàng thụ hưởng (Hỗ trợ Nhập tự do HOẶC Chọn danh sách) -->
-          <div class="form-group mb-3">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-              <label class="form-label fw-bold mb-0">Khách hàng thụ hưởng *</label>
-              <div class="customer-entry-toggle" id="customerEntryModeToggle">
-                <button type="button" class="btn-mode-toggle active" id="btnModeFreeEntry" onclick="setCustomerEntryMode('free')">
-                  <i class="bi bi-pencil-square"></i> Nhập tự do
-                </button>
-                <button type="button" class="btn-mode-toggle" id="btnModeSelectExisting" onclick="setCustomerEntryMode('select')">
-                  <i class="bi bi-list-check"></i> Chọn có sẵn
-                </button>
+        <!-- BƯỚC 1: ĐIỀN THÔNG TIN HỢP ĐỒNG -->
+        <div id="policyStep1Section">
+          <form id="createPolicyForm" onsubmit="event.preventDefault(); proceedToPaymentStep();">
+            <!-- Khách hàng thụ hưởng (Hỗ trợ Nhập tự do HOẶC Chọn danh sách) -->
+            <div class="form-group mb-3">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <label class="form-label fw-bold mb-0">Khách hàng thụ hưởng *</label>
+                <div class="customer-entry-toggle" id="customerEntryModeToggle">
+                  <button type="button" class="btn-mode-toggle active" id="btnModeFreeEntry" onclick="setCustomerEntryMode('free')">
+                    <i class="bi bi-pencil-square"></i> Nhập tự do
+                  </button>
+                  <button type="button" class="btn-mode-toggle" id="btnModeSelectExisting" onclick="setCustomerEntryMode('select')">
+                    <i class="bi bi-list-check"></i> Chọn có sẵn
+                  </button>
+                </div>
+              </div>
+
+              <!-- Mode 1: Nhập thông tin khách hàng tự do -->
+              <div id="customerFreeEntrySection" class="customer-entry-box">
+                <div class="form-row mb-2">
+                  <div class="form-group flex-1 mb-0">
+                    <label class="form-sublabel">Họ và tên khách hàng *</label>
+                    <input type="text" id="policyCustomerNameInput" class="form-input" placeholder="Ví dụ: Trần Hoàng Nam">
+                  </div>
+                  <div class="form-group flex-1 mb-0">
+                    <label class="form-sublabel">Số CCCD / CMND *</label>
+                    <input type="text" id="policyCustomerIdentityInput" class="form-input" placeholder="Ví dụ: 079201009888">
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group flex-1 mb-0">
+                    <label class="form-sublabel">Số điện thoại</label>
+                    <input type="tel" id="policyCustomerPhoneInput" class="form-input" placeholder="Ví dụ: 0912345678">
+                  </div>
+                  <div class="form-group flex-1 mb-0">
+                    <label class="form-sublabel">Địa chỉ Email</label>
+                    <input type="email" id="policyCustomerEmailInput" class="form-input" placeholder="Ví dụ: hoangnam@gmail.com">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Mode 2: Chọn từ danh sách tài khoản đã có -->
+              <div id="customerSelectSection" style="display: none;">
+                <select id="policyCustomerSelect" class="form-input">
+                  <option value="">-- Đang nạp danh sách khách hàng... --</option>
+                </select>
               </div>
             </div>
 
-            <!-- Mode 1: Nhập thông tin khách hàng tự do -->
-            <div id="customerFreeEntrySection" class="customer-entry-box">
-              <div class="form-row mb-2">
-                <div class="form-group flex-1 mb-0">
-                  <label class="form-sublabel">Họ và tên khách hàng *</label>
-                  <input type="text" id="policyCustomerNameInput" class="form-input" placeholder="Ví dụ: Trần Hoàng Nam">
-                </div>
-                <div class="form-group flex-1 mb-0">
-                  <label class="form-sublabel">Số CCCD / CMND *</label>
-                  <input type="text" id="policyCustomerIdentityInput" class="form-input" placeholder="Ví dụ: 079201009888">
-                </div>
-              </div>
-              <div class="form-row">
-                <div class="form-group flex-1 mb-0">
-                  <label class="form-sublabel">Số điện thoại</label>
-                  <input type="tel" id="policyCustomerPhoneInput" class="form-input" placeholder="Ví dụ: 0912345678">
-                </div>
-                <div class="form-group flex-1 mb-0">
-                  <label class="form-sublabel">Địa chỉ Email</label>
-                  <input type="email" id="policyCustomerEmailInput" class="form-input" placeholder="Ví dụ: hoangnam@gmail.com">
-                </div>
-              </div>
-            </div>
-
-            <!-- Mode 2: Chọn từ danh sách tài khoản đã có -->
-            <div id="customerSelectSection" style="display: none;">
-              <select id="policyCustomerSelect" class="form-input">
-                <option value="">-- Đang nạp danh sách khách hàng... --</option>
+            <div class="form-group mb-3">
+              <label class="form-label fw-bold">Gói sản phẩm bảo hiểm *</label>
+              <select id="policyProductSelect" class="form-input" required onchange="onPolicyProductSelected()">
+                <option value="">-- Đang nạp danh mục sản phẩm... --</option>
               </select>
             </div>
-          </div>
 
-          <div class="form-group mb-3">
-            <label class="form-label fw-bold">Gói sản phẩm bảo hiểm *</label>
-            <select id="policyProductSelect" class="form-input" required onchange="onPolicyProductSelected()">
-              <option value="">-- Đang nạp danh mục sản phẩm... --</option>
-            </select>
-          </div>
-
-          <div class="form-row mb-3">
-            <div class="form-group flex-1">
-              <label class="form-label fw-bold">Hạn mức bảo vệ (VNĐ) *</label>
-              <input type="text" inputmode="numeric" id="policySumInsured" class="form-input" placeholder="50.000.000" required oninput="formatCurrencyInput(this)">
+            <div class="form-row mb-3">
+              <div class="form-group flex-1">
+                <label class="form-label fw-bold">Hạn mức bảo vệ (VNĐ) *</label>
+                <input type="text" inputmode="numeric" id="policySumInsured" class="form-input" placeholder="50.000.000" required oninput="formatCurrencyInput(this)">
+              </div>
+              <div class="form-group flex-1">
+                <label class="form-label fw-bold">Phí bảo hiểm định kỳ (VNĐ/kỳ) *</label>
+                <input type="text" inputmode="numeric" id="policyPremiumAmount" class="form-input" placeholder="3.500.000" required oninput="formatCurrencyInput(this)">
+              </div>
             </div>
-            <div class="form-group flex-1">
-              <label class="form-label fw-bold">Phí bảo hiểm định kỳ (VNĐ/kỳ) *</label>
-              <input type="text" inputmode="numeric" id="policyPremiumAmount" class="form-input" placeholder="3.500.000" required oninput="formatCurrencyInput(this)">
+
+            <div class="form-row mb-3">
+              <div class="form-group flex-1">
+                <label class="form-label fw-bold">Kỳ nộp phí</label>
+                <select id="policyPaymentCycle" class="form-input" onchange="onPaymentCycleChange()">
+                  <option value="ANNUALLY" selected>Hàng năm (Thường niên)</option>
+                  <option value="QUARTERLY">Hàng quý (3 tháng/lần)</option>
+                  <option value="MONTHLY">Hàng tháng</option>
+                </select>
+              </div>
+              <div class="form-group flex-1">
+                <label class="form-label fw-bold">Ngày bắt đầu hiệu lực *</label>
+                <input type="date" id="policyStartDate" class="form-input" required onchange="onPolicyStartDateChange()">
+              </div>
+            </div>
+
+            <div class="form-group mb-3">
+              <label class="form-label fw-bold">Ngày kết thúc hiệu lực *</label>
+              <input type="date" id="policyEndDate" class="form-input" required>
+            </div>
+
+            <div class="modal-footer p-0 mt-3" style="display: flex; justify-content: flex-end; gap: 10px;">
+              <button type="button" class="btn btn-outline" onclick="closeCreatePolicyModal()">Hủy bỏ</button>
+              <button type="submit" class="btn btn-primary" id="btnSubmitCreatePolicy">
+                <i class="bi bi-arrow-right-circle-fill"></i> Phát Hành Hợp Đồng
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- BƯỚC 2: ĐÓNG PHÍ BẢO HIỂM (CHỈ HIỆN KHI BẤM "PHÁT HÀNH HỢP ĐỒNG") -->
+        <div id="policyStep2Section" style="display: none;">
+          <!-- Tóm tắt hợp đồng phát hành -->
+          <div class="pay-summary-banner mb-3">
+            <div class="summary-item">
+              <span class="summary-label"><i class="bi bi-shield-check text-success"></i> Gói bảo hiểm:</span>
+              <strong id="modalPayProduct" class="text-success">-</strong>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label"><i class="bi bi-person text-primary"></i> Khách hàng:</span>
+              <strong id="modalPayCustomer">-</strong>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label"><i class="bi bi-cash-stack text-success"></i> Phí nộp kỳ đầu:</span>
+              <strong id="modalPayAmount" class="text-success fs-5">-</strong>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label"><i class="bi bi-calendar-check"></i> Kỳ nộp phí:</span>
+              <span id="modalPayCycle" class="badge badge-info">-</span>
             </div>
           </div>
 
-          <div class="form-row mb-3">
-            <div class="form-group flex-1">
-              <label class="form-label fw-bold">Kỳ nộp phí</label>
-              <select id="policyPaymentCycle" class="form-input" onchange="onPaymentCycleChange()">
-                <option value="ANNUALLY" selected>Hàng năm (Thường niên)</option>
-                <option value="QUARTERLY">Hàng quý (3 tháng/lần)</option>
-                <option value="MONTHLY">Hàng tháng</option>
-              </select>
-            </div>
-            <div class="form-group flex-1">
-              <label class="form-label fw-bold">Ngày bắt đầu hiệu lực *</label>
-              <input type="date" id="policyStartDate" class="form-input" required onchange="onPolicyStartDateChange()">
+          <!-- Chọn phương thức thanh toán -->
+          <div class="form-group mb-2">
+            <label class="form-label fw-bold" style="font-size: 13px;">Chọn phương thức thanh toán *</label>
+            <div class="payment-method-selector-compact">
+              <div class="method-card-compact active" id="modalMethodCard_BANK" onclick="selectModalPaymentMethod('BANK_TRANSFER')">
+                <i class="bi bi-qr-code text-primary"></i>
+                <div>
+                  <strong>Chuyển khoản QR (VietQR)</strong>
+                  <small>Ngân hàng Quân Đội (MB Bank)</small>
+                </div>
+              </div>
+              <div class="method-card-compact" id="modalMethodCard_MOMO" onclick="selectModalPaymentMethod('MOMO')">
+                <i class="bi bi-wallet2 text-danger"></i>
+                <div>
+                  <strong>Ví điện tử MoMo</strong>
+                  <small>Quét mã qua App MoMo</small>
+                </div>
+              </div>
+              <div class="method-card-compact" id="modalMethodCard_VNPAY" onclick="selectModalPaymentMethod('VNPAY')">
+                <i class="bi bi-credit-card-fill text-info"></i>
+                <div>
+                  <strong>Cổng VNPAY / ATM</strong>
+                  <small>Thẻ ATM nội địa & Quốc tế</small>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div class="form-group mb-3">
-            <label class="form-label fw-bold">Ngày kết thúc hiệu lực *</label>
-            <input type="date" id="policyEndDate" class="form-input" required>
+          <!-- Khung VietQR và Tải ảnh biên lai bên cạnh nhau -->
+          <div class="vietqr-frame modal-vietqr-frame">
+            <div class="vietqr-header">
+              <div class="bank-brand">
+                <i class="bi bi-bank fs-4 text-primary"></i>
+                <div>
+                  <strong id="modalBankBrandName">MB BANK</strong>
+                  <small class="d-block text-muted" id="modalBankBrandSub">Ngân hàng TMCP Quân Đội</small>
+                </div>
+              </div>
+              <span class="qr-tag">VietQR Pro 24/7</span>
+            </div>
+
+            <!-- Row chứa cả Mã QR và Mục Tải Ảnh Biên Lai bên cạnh nhau -->
+            <div class="qr-and-upload-row">
+              <!-- Cột Trái: Mã QR Thanh Toán -->
+              <div class="qr-col">
+                <div class="media-col-header">
+                  <i class="bi bi-qr-code text-primary"></i> <span>Mã QR Thanh Toán</span>
+                </div>
+                <div class="qr-image-wrapper">
+                  <img id="modalQrDisplayImage" src="" alt="Mã QR thanh toán" class="qr-img">
+                  <div class="qr-center-icon"><i class="bi bi-shield-fill-check text-success"></i></div>
+                </div>
+                <small class="media-col-note"><i class="bi bi-phone"></i> Quét mã qua App Ngân hàng</small>
+              </div>
+
+              <!-- Cột Phải: Tải Ảnh Biên Lai / Hóa Đơn Chuyển Khoản (Bên Cạnh Mã QR) -->
+              <div class="receipt-upload-col">
+                <div class="media-col-header">
+                  <i class="bi bi-receipt text-success"></i> <span>Tải Ảnh Biên Lai Giao Dịch</span>
+                </div>
+                
+                <div class="receipt-dropzone" id="modalReceiptDropzone" onclick="triggerModalReceiptFileInput()">
+                  <input type="file" id="modalReceiptFileInput" accept="image/*" style="display: none;" onchange="handleModalReceiptFileSelect(event)">
+                  
+                  <!-- Chưa chọn ảnh -->
+                  <div class="dropzone-empty" id="modalReceiptDropzoneEmpty">
+                    <div class="upload-icon-circle">
+                      <i class="bi bi-cloud-arrow-up-fill"></i>
+                    </div>
+                    <strong>Tải Ảnh Biên Lai</strong>
+                    <p>Nhấp chọn ảnh hoặc kéo thả ảnh chụp bill chuyển khoản vào đây</p>
+                    <span class="upload-tip-pill"><i class="bi bi-image"></i> Hỗ trợ PNG, JPG, JPEG</span>
+                  </div>
+
+                  <!-- Đã tải ảnh lên (Preview) -->
+                  <div class="dropzone-preview" id="modalReceiptDropzonePreview" style="display: none;">
+                    <div class="preview-img-container">
+                      <img id="modalReceiptPreviewThumb" src="" alt="Ảnh biên lai" class="preview-thumb-img">
+                      <div class="preview-overlay">
+                        <button type="button" class="btn-preview-zoom" onclick="event.stopPropagation(); viewModalReceiptZoom();" title="Xem ảnh phóng to">
+                          <i class="bi bi-zoom-in"></i> Phóng to
+                        </button>
+                      </div>
+                    </div>
+                    <div class="preview-meta">
+                      <div class="preview-file-name" id="modalReceiptPreviewName">bienlai.png</div>
+                      <span class="badge badge-success" style="font-size: 10px; padding: 2px 6px;"><i class="bi bi-check2-circle"></i> Đã chọn</span>
+                    </div>
+                    <div class="preview-actions">
+                      <button type="button" class="btn btn-xs btn-outline-danger" onclick="event.stopPropagation(); removeModalReceiptImage();">
+                        <i class="bi bi-trash"></i> Đổi ảnh khác
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <small class="media-col-note"><i class="bi bi-shield-check text-success"></i> Đính kèm minh chứng đóng phí</small>
+              </div>
+            </div>
+
+            <!-- Chi tiết tài khoản ngân hàng -->
+            <div class="vietqr-details mt-2 text-start">
+              <div class="qr-detail-row">
+                <span class="text-muted">Chủ tài khoản:</span>
+                <strong>CTCP BẢO HIỂM INSURTECH VIỆT NAM</strong>
+              </div>
+              <div class="qr-detail-row">
+                <span class="text-muted">Số tài khoản:</span>
+                <strong class="text-primary fs-5" id="modalQrAccountNumber">8888 6666 9999</strong>
+              </div>
+              <div class="qr-detail-row">
+                <span class="text-muted">Số tiền nộp phí:</span>
+                <strong class="text-success fs-5" id="modalQrDisplayAmount">3.500.000 VNĐ</strong>
+              </div>
+              <div class="qr-detail-row">
+                <span class="text-muted">Nội dung chuyển khoản:</span>
+                <code class="qr-transfer-memo" id="modalQrDisplayMemo">DONGPHI POL-...</code>
+              </div>
+              <div class="qr-detail-row">
+                <span class="text-muted">Biên lai đính kèm:</span>
+                <span id="modalQrDetailReceiptStatus" class="text-muted" style="font-size: 12px;">
+                  <i class="bi bi-dash-circle"></i> Chưa đính kèm (không bắt buộc)
+                </span>
+              </div>
+            </div>
           </div>
 
-          <div class="modal-footer p-0 mt-3">
-            <button type="button" class="btn btn-outline" onclick="closeCreatePolicyModal()">Hủy bỏ</button>
-            <button type="submit" class="btn btn-primary" id="btnSubmitCreatePolicy">
-              <i class="bi bi-check-circle-fill"></i> Phát Hành Hợp Đồng
+          <!-- Nút hành động Bước 2 -->
+          <div class="modal-footer p-0 mt-3" style="display: flex; justify-content: space-between; align-items: center;">
+            <button type="button" class="btn btn-outline" onclick="backToPolicyStep1()">
+              <i class="bi bi-arrow-left"></i> Quay lại sửa thông tin
+            </button>
+            <button type="button" class="btn btn-primary btn-lg" id="btnConfirmPayAndIssue" onclick="confirmPaymentAndIssuePolicy()">
+              <i class="bi bi-check-circle-fill"></i> Xác Nhận Đã Đóng Phí & Hoàn Tất Cấp Hợp Đồng
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   </div>
@@ -1164,6 +1128,6 @@
   <!-- Toast Notification Container -->
   <div class="toast-container" id="toastContainer"></div>
 
-  <script src="app.js?v=2.2"></script>
+  <script src="app.js?v=2.3"></script>
 </body>
 </html>

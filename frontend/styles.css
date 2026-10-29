@@ -2662,3 +2662,161 @@ select.form-input option, select.select-input option {
     grid-template-columns: 1fr;
   }
 }
+
+/* ========================================================================= */
+/* POLICY ISSUANCE WIZARD MODAL (2-STEP ISSUANCE + PAYMENT FLOW)             */
+/* ========================================================================= */
+#createPolicyModal .modal-dialog {
+  max-width: 760px;
+  width: 95%;
+}
+
+.policy-wizard-steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 12px 24px;
+  background: #f8fafc;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.wizard-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.wizard-step .step-num {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  transition: all 0.2s ease;
+}
+
+.wizard-step.active {
+  color: #15803d;
+}
+
+.wizard-step.active .step-num {
+  background: #16a34a;
+  color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.2);
+}
+
+.wizard-step.completed {
+  color: #15803d;
+}
+
+.wizard-step.completed .step-num {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.wizard-step-line {
+  flex: 0 0 50px;
+  height: 2px;
+  background: #cbd5e1;
+  border-radius: 2px;
+  transition: all 0.2s ease;
+}
+
+.wizard-step-line.active {
+  background: #16a34a;
+}
+
+/* Pay Summary Banner */
+.pay-summary-banner {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px 16px;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+.summary-label {
+  color: #475569;
+  font-size: 12.5px;
+}
+
+/* Compact Payment Method Selector */
+.payment-method-selector-compact {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.method-card-compact {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.method-card-compact:hover {
+  border-color: #16a34a;
+  background: #f0fdf4;
+}
+
+.method-card-compact.active {
+  border-color: #16a34a;
+  background: #ecfdf5;
+  box-shadow: 0 0 0 1.5px rgba(22, 163, 74, 0.25);
+}
+
+.method-card-compact i {
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.method-card-compact strong {
+  display: block;
+  font-size: 12px;
+  color: var(--secondary);
+  line-height: 1.2;
+}
+
+.method-card-compact small {
+  display: block;
+  font-size: 10.5px;
+  color: var(--text-muted);
+}
+
+.modal-vietqr-frame {
+  margin-top: 8px;
+  padding: 14px;
+}
+
+@media (max-width: 640px) {
+  .payment-method-selector-compact {
+    grid-template-columns: 1fr;
+  }
+  .pay-summary-banner {
+    grid-template-columns: 1fr;
+  }
+}

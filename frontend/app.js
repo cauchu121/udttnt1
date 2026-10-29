@@ -287,10 +287,7 @@ function applyRolePermissions(role) {
       navProducts.style.display = "flex";
       navProducts.innerHTML = `<i class="bi bi-box-seam"></i> Khám Phá Gói Bảo Hiểm`;
     }
-    if (navPayPremium) {
-      navPayPremium.style.display = "flex";
-      navPayPremium.innerHTML = `<i class="bi bi-credit-card-2-front-fill"></i> Đóng Phí Bảo Hiểm`;
-    }
+    if (navPayPremium) navPayPremium.style.display = "none";
     if (navFinance) {
       navFinance.style.display = "flex";
       navFinance.innerHTML = `<i class="bi bi-clock-history"></i> Lịch Sử Nộp Phí`;
@@ -331,10 +328,7 @@ function applyRolePermissions(role) {
       navClaims.style.display = "flex";
       navClaims.innerHTML = `<i class="bi bi-file-earmark-medical"></i> Hồ Sơ Claim Khách Hàng`;
     }
-    if (navPayPremium) {
-      navPayPremium.style.display = "flex";
-      navPayPremium.innerHTML = `<i class="bi bi-credit-card-2-front-fill"></i> Thu Phí Hộ Khách`;
-    }
+    if (navPayPremium) navPayPremium.style.display = "none";
     if (navFinance) navFinance.style.display = "none";
 
     if (btnTopSubmitClaim) {
@@ -375,10 +369,7 @@ function applyRolePermissions(role) {
       navProducts.style.display = "flex";
       navProducts.innerHTML = `<i class="bi bi-box-seam-fill"></i> Danh Mục Sản Phẩm`;
     }
-    if (navPayPremium) {
-      navPayPremium.style.display = "flex";
-      navPayPremium.innerHTML = `<i class="bi bi-credit-card-2-front-fill"></i> Thu Phí Bảo Hiểm`;
-    }
+    if (navPayPremium) navPayPremium.style.display = "none";
     if (navFinance) {
       navFinance.style.display = "flex";
       navFinance.innerHTML = `<i class="bi bi-cash-stack"></i> Kế Toán Thu Phí`;
@@ -981,6 +972,10 @@ async function openCreatePolicyModal() {
   const modal = document.getElementById("createPolicyModal");
   if (!modal) return;
 
+  // Luôn bắt đầu từ Bước 1
+  backToPolicyStep1();
+  removeModalReceiptImage();
+
   const customerSelect = document.getElementById("policyCustomerSelect");
   const productSelect = document.getElementById("policyProductSelect");
   const startDateInput = document.getElementById("policyStartDate");
@@ -1088,6 +1083,8 @@ async function openCreatePolicyModal() {
 function closeCreatePolicyModal() {
   const modal = document.getElementById("createPolicyModal");
   if (modal) modal.style.display = "none";
+  backToPolicyStep1();
+  removeModalReceiptImage();
 }
 
 // Khi chọn gói sản phẩm, tự động cập nhật hạn mức và mức phí mẫu
@@ -1138,17 +1135,23 @@ function onPolicyStartDateChange() {
   }
 }
 
-// Gửi form phát hành hợp đồng bảo hiểm mới (Hỗ trợ Nhập tự do HOẶC Chọn có sẵn)
-async function handleCreatePolicySubmit() {
+// =============================================================================
+// QUY TRÌNH PHÁT HÀNH HỢP ĐỒNG 2 BƯỚC (BƯỚC 2 ĐÓNG PHÍ CHỈ HIỆN KHI BẤM PHÁT HÀNH)
+// =============================================================================
+let pendingPolicyIssuanceData = null;
+let currentModalPaymentMethod = "BANK_TRANSFER";
+let currentModalReceiptBase64 = null;
+let currentModalReceiptFileName = "";
+let tempIssuedPolicyCode = "";
+
+// BƯỚC 1 -> BƯỚC 2: Khi bấm "Phát Hành Hợp Đồng"
+function proceedToPaymentStep() {
   const productId = parseInt(document.getElementById("policyProductSelect").value);
   const sumInsured = parseNumberFromDots(document.getElementById("policySumInsured").value);
   const premiumAmount = parseNumberFromDots(document.getElementById("policyPremiumAmount").value);
   const paymentCycle = document.getElementById("policyPaymentCycle").value;
   const startDate = document.getElementById("policyStartDate").value;
   const endDate = document.getElementById("policyEndDate").value;
-
-  const btnSubmit = document.getElementById("btnSubmitCreatePolicy");
-  const originalBtnHtml = btnSubmit ? btnSubmit.innerHTML : "";
 
   if (!productId) {
     showToast("Vui lòng chọn Gói bảo hiểm cần phát hành!", "error");
@@ -1163,6 +1166,7 @@ async function handleCreatePolicySubmit() {
 
   if (currentUser && currentUser.role === "customer") {
     customerId = currentUser.id;
+    customerName = currentUser.full_name;
   } else if (currentCustomerEntryMode === "free") {
     customerName = (document.getElementById("policyCustomerNameInput").value || "").trim();
     customerIdentity = (document.getElementById("policyCustomerIdentityInput").value || "").trim();
@@ -1185,6 +1189,8 @@ async function handleCreatePolicySubmit() {
       showToast("Vui lòng chọn một khách hàng từ danh sách!", "error");
       return;
     }
+    const selOpt = document.getElementById("policyCustomerSelect").selectedOptions[0];
+    customerName = selOpt ? selOpt.textContent.split(" (")[0] : "Khách hàng";
   }
 
   if (isNaN(sumInsured) || sumInsured <= 0 || isNaN(premiumAmount) || premiumAmount <= 0) {
@@ -1192,24 +1198,240 @@ async function handleCreatePolicySubmit() {
     return;
   }
 
-  if (btnSubmit) {
-    btnSubmit.disabled = true;
-    btnSubmit.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Đang phát hành...`;
+  // Lưu trữ dữ liệu hợp đồng chờ xác nhận đóng phí
+  pendingPolicyIssuanceData = {
+    customer_id: customerId,
+    customer_name: customerName,
+    customer_identity: customerIdentity,
+    customer_phone: customerPhone,
+    customer_email: customerEmail,
+    product_id: productId,
+    start_date: startDate ? `${startDate}T00:00:00` : null,
+    end_date: endDate ? `${endDate}T23:59:59` : null,
+    total_sum_insured: sumInsured,
+    premium_amount: premiumAmount,
+    payment_cycle: paymentCycle
+  };
+
+  // Lấy thông tin gói bảo hiểm
+  const foundPrd = cachedProductsList.find(p => p.id === productId);
+  const prdName = foundPrd ? foundPrd.product_name : "Gói Bảo Hiểm";
+
+  // Tạo mã hợp đồng tạm thời
+  const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
+  tempIssuedPolicyCode = `POL-2026-${randomSuffix}`;
+
+  // Đổ dữ liệu vào tóm tắt Bước 2
+  document.getElementById("modalPayProduct").textContent = prdName;
+  document.getElementById("modalPayCustomer").textContent = customerName;
+  document.getElementById("modalPayAmount").textContent = formatNumberWithDots(premiumAmount) + " VNĐ";
+  
+  const cycleNames = {
+    ANNUALLY: "Hàng năm (Thường niên)",
+    QUARTERLY: "Hàng quý (3 tháng/kỳ)",
+    MONTHLY: "Hàng tháng"
+  };
+  document.getElementById("modalPayCycle").textContent = cycleNames[paymentCycle] || "Thường niên";
+
+  // Cập nhật thông tin VietQR
+  document.getElementById("modalQrDisplayAmount").textContent = formatNumberWithDots(premiumAmount) + " VNĐ";
+  const memoText = `DONGPHI ${tempIssuedPolicyCode}`;
+  document.getElementById("modalQrDisplayMemo").textContent = memoText;
+
+  updateModalPaymentQrCode();
+
+  // CHUYỂN HIỂN THỊ: Ẩn Bước 1, Hiện Bước 2 (Đóng Phí Bảo Hiểm)
+  document.getElementById("policyStep1Section").style.display = "none";
+  document.getElementById("policyStep2Section").style.display = "block";
+
+  // Cập nhật Step Tracker
+  const step1Ind = document.getElementById("wizardStep1Indicator");
+  const stepLine = document.getElementById("wizardStepLine");
+  const step2Ind = document.getElementById("wizardStep2Indicator");
+  if (step1Ind) { step1Ind.classList.remove("active"); step1Ind.classList.add("completed"); }
+  if (stepLine) stepLine.classList.add("active");
+  if (step2Ind) step2Ind.classList.add("active");
+
+  // Cập nhật tiêu đề modal
+  document.getElementById("createPolicyModalTitle").textContent = "Đóng Phí Bảo Hiểm & Hoàn Tất Cấp Hợp Đồng";
+  document.getElementById("createPolicyModalSubtitle").textContent = "Quét mã QR thanh toán hoặc đính kèm ảnh biên lai để kích hoạt hợp đồng";
+}
+
+// BƯỚC 2 -> BƯỚC 1: Quay lại sửa thông tin hợp đồng
+function backToPolicyStep1() {
+  const step1Section = document.getElementById("policyStep1Section");
+  const step2Section = document.getElementById("policyStep2Section");
+  if (step1Section) step1Section.style.display = "block";
+  if (step2Section) step2Section.style.display = "none";
+
+  const step1Ind = document.getElementById("wizardStep1Indicator");
+  const stepLine = document.getElementById("wizardStepLine");
+  const step2Ind = document.getElementById("wizardStep2Indicator");
+  if (step1Ind) { step1Ind.classList.add("active"); step1Ind.classList.remove("completed"); }
+  if (stepLine) stepLine.classList.remove("active");
+  if (step2Ind) step2Ind.classList.remove("active");
+
+  const title = document.getElementById("createPolicyModalTitle");
+  const subtitle = document.getElementById("createPolicyModalSubtitle");
+  if (title) title.textContent = "Cấp Hợp Đồng Bảo Hiểm Mới";
+  if (subtitle) subtitle.textContent = "Điền thông tin và liên kết khách hàng thụ hưởng";
+}
+
+// Chọn phương thức thanh toán trong modal
+function selectModalPaymentMethod(method) {
+  currentModalPaymentMethod = method;
+  document.querySelectorAll(".payment-method-selector-compact .method-card-compact").forEach(c => c.classList.remove("active"));
+  const card = document.getElementById(`modalMethodCard_${method === 'BANK_TRANSFER' ? 'BANK' : method}`);
+  if (card) card.classList.add("active");
+
+  const accNumEl = document.getElementById("modalQrAccountNumber");
+  const brandName = document.getElementById("modalBankBrandName");
+  const brandSub = document.getElementById("modalBankBrandSub");
+
+  if (method === "BANK_TRANSFER") {
+    if (accNumEl) accNumEl.textContent = "8888 6666 9999";
+    if (brandName) brandName.textContent = "MB BANK";
+    if (brandSub) brandSub.textContent = "Ngân hàng TMCP Quân Đội";
+  } else if (method === "MOMO") {
+    if (accNumEl) accNumEl.textContent = "0988 777 666 (Ví MoMo)";
+    if (brandName) brandName.textContent = "VÍ MOMO";
+    if (brandSub) brandSub.textContent = "Ví điện tử MoMo Pay";
+  } else if (method === "VNPAY") {
+    if (accNumEl) accNumEl.textContent = "VNPAY-INSURTECH-GATEWAY";
+    if (brandName) brandName.textContent = "VNPAY QR";
+    if (brandSub) brandSub.textContent = "Cổng thanh toán Quốc gia";
+  }
+
+  updateModalPaymentQrCode();
+}
+
+function updateModalPaymentQrCode() {
+  const qrImg = document.getElementById("modalQrDisplayImage");
+  if (!qrImg || !pendingPolicyIssuanceData) return;
+
+  const amount = pendingPolicyIssuanceData.premium_amount || 0;
+  const memoText = `DONGPHI ${tempIssuedPolicyCode || 'POL-2026'}`;
+  const qrData = encodeURIComponent(`https://payment.insurtech.vn/pay?policy=${tempIssuedPolicyCode}&amount=${amount}&memo=${memoText}`);
+  qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${qrData}`;
+}
+
+// Upload ảnh biên lai trong modal
+function triggerModalReceiptFileInput() {
+  const input = document.getElementById("modalReceiptFileInput");
+  if (input) input.click();
+}
+
+function handleModalReceiptFileSelect(event) {
+  const file = event.target.files ? event.target.files[0] : null;
+  if (!file) return;
+  processModalReceiptFile(file);
+}
+
+function processModalReceiptFile(file) {
+  if (!file.type.startsWith("image/")) {
+    showToast("Vui lòng chọn file hình ảnh (PNG, JPG, JPEG)!", "error");
+    return;
+  }
+  if (file.size > 10 * 1024 * 1024) {
+    showToast("Dung lượng ảnh vượt quá 10MB!", "error");
+    return;
+  }
+
+  currentModalReceiptFileName = file.name;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    currentModalReceiptBase64 = e.target.result;
+    displayModalReceiptPreview(currentModalReceiptBase64, file.name);
+  };
+  reader.readAsDataURL(file);
+}
+
+function displayModalReceiptPreview(base64Data, fileName) {
+  const emptyBox = document.getElementById("modalReceiptDropzoneEmpty");
+  const previewBox = document.getElementById("modalReceiptDropzonePreview");
+  const thumbImg = document.getElementById("modalReceiptPreviewThumb");
+  const nameEl = document.getElementById("modalReceiptPreviewName");
+  const statusEl = document.getElementById("modalQrDetailReceiptStatus");
+
+  if (emptyBox) emptyBox.style.display = "none";
+  if (previewBox) previewBox.style.display = "flex";
+  if (thumbImg) thumbImg.src = base64Data;
+  if (nameEl) nameEl.textContent = fileName || "bien_lai.png";
+  if (statusEl) {
+    statusEl.innerHTML = `<span class="badge badge-success"><i class="bi bi-check-circle-fill"></i> Đã đính kèm ảnh</span>`;
+  }
+  showToast("Đã tải ảnh biên lai thành công!", "success");
+}
+
+function removeModalReceiptImage() {
+  currentModalReceiptBase64 = null;
+  currentModalReceiptFileName = "";
+  const input = document.getElementById("modalReceiptFileInput");
+  if (input) input.value = "";
+
+  const emptyBox = document.getElementById("modalReceiptDropzoneEmpty");
+  const previewBox = document.getElementById("modalReceiptDropzonePreview");
+  const thumbImg = document.getElementById("modalReceiptPreviewThumb");
+  const statusEl = document.getElementById("modalQrDetailReceiptStatus");
+
+  if (emptyBox) emptyBox.style.display = "flex";
+  if (previewBox) previewBox.style.display = "none";
+  if (thumbImg) thumbImg.src = "";
+  if (statusEl) {
+    statusEl.innerHTML = `<i class="bi bi-dash-circle"></i> Chưa đính kèm (không bắt buộc)`;
+  }
+}
+
+function viewModalReceiptZoom() {
+  if (!currentModalReceiptBase64) return;
+  const modal = document.getElementById("receiptViewModal");
+  const img = document.getElementById("receiptModalImg");
+  const title = document.getElementById("receiptModalTitle");
+  const subtitle = document.getElementById("receiptModalSubtitle");
+  const details = document.getElementById("receiptModalDetails");
+  const btnDownload = document.getElementById("btnDownloadReceipt");
+
+  if (title) title.textContent = "Xem Trước Biên Lai Thanh Toán";
+  if (subtitle) subtitle.textContent = currentModalReceiptFileName || "Ảnh chụp minh chứng giao dịch";
+  if (img) img.src = currentModalReceiptBase64;
+  if (btnDownload) {
+    btnDownload.href = currentModalReceiptBase64;
+    btnDownload.download = currentModalReceiptFileName || "bien_lai.png";
+  }
+  if (details && pendingPolicyIssuanceData) {
+    details.innerHTML = `
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        <div><strong>Tập tin:</strong> ${currentModalReceiptFileName || 'bien_lai.png'}</div>
+        <div><strong>Số tiền:</strong> <span class="text-success fw-bold">${formatNumberWithDots(pendingPolicyIssuanceData.premium_amount)} VNĐ</span></div>
+        <div><strong>Khách hàng:</strong> ${pendingPolicyIssuanceData.customer_name}</div>
+        <div><strong>Trạng thái:</strong> <span class="text-primary">Chuẩn bị xác nhận cấp hợp đồng</span></div>
+      </div>
+    `;
+  }
+  if (modal) modal.style.display = "flex";
+}
+
+// BƯỚC 2: Bấm "Xác Nhận Đã Đóng Phí & Phát Hành Hợp Đồng"
+async function confirmPaymentAndIssuePolicy() {
+  if (!pendingPolicyIssuanceData) {
+    showToast("Dữ liệu phát hành hợp đồng không hợp lệ. Vui lòng thử lại!", "error");
+    backToPolicyStep1();
+    return;
+  }
+
+  const btnConfirm = document.getElementById("btnConfirmPayAndIssue");
+  const origBtnHtml = btnConfirm ? btnConfirm.innerHTML : "";
+
+  if (btnConfirm) {
+    btnConfirm.disabled = true;
+    btnConfirm.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Đang xác nhận đóng phí & phát hành...`;
   }
 
   try {
     const payload = {
-      customer_id: customerId,
-      customer_name: customerName,
-      customer_identity: customerIdentity,
-      customer_phone: customerPhone,
-      customer_email: customerEmail,
-      product_id: productId,
-      start_date: startDate ? `${startDate}T00:00:00` : null,
-      end_date: endDate ? `${endDate}T23:59:59` : null,
-      total_sum_insured: sumInsured,
-      premium_amount: premiumAmount,
-      payment_cycle: paymentCycle
+      ...pendingPolicyIssuanceData,
+      payment_method: currentModalPaymentMethod,
+      receipt_image: currentModalReceiptBase64
     };
 
     const res = await fetch(`${API_BASE}/policies`, {
@@ -1232,15 +1454,22 @@ async function handleCreatePolicySubmit() {
     closeCreatePolicyModal();
     loadPolicies();
     loadDashboard();
+    loadPayments();
+    switchTab("policies");
 
   } catch (err) {
     showToast(err.message, "error");
   } finally {
-    if (btnSubmit) {
-      btnSubmit.disabled = false;
-      btnSubmit.innerHTML = originalBtnHtml;
+    if (btnConfirm) {
+      btnConfirm.disabled = false;
+      btnConfirm.innerHTML = origBtnHtml;
     }
   }
+}
+
+// Giữ lại alias để tương thích form submit
+function handleCreatePolicySubmit() {
+  proceedToPaymentStep();
 }
 
 // 5. GÓI SẢN PHẨM BẢO HIỂM
@@ -1810,44 +2039,89 @@ function closeReceiptModal() {
 
 function initReceiptDropzoneListeners() {
   const dropzone = document.getElementById("receiptDropzone");
-  if (!dropzone) return;
+  if (dropzone) {
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzone.classList.add("dragover");
+      }, false);
+    });
 
-  ['dragenter', 'dragover'].forEach(eventName => {
-    dropzone.addEventListener(eventName, (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      dropzone.classList.add("dragover");
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzone.classList.remove("dragover");
+      }, false);
+    });
+
+    dropzone.addEventListener('drop', (e) => {
+      const dt = e.dataTransfer;
+      const files = dt.files;
+      if (files && files.length > 0) {
+        processReceiptFile(files[0]);
+      }
     }, false);
-  });
+  }
 
-  ['dragleave', 'drop'].forEach(eventName => {
-    dropzone.addEventListener(eventName, (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      dropzone.classList.remove("dragover");
+  // Khởi tạo drag & drop cho Modal Cấp hợp đồng (Bước 2 Đóng phí)
+  const modalDropzone = document.getElementById("modalReceiptDropzone");
+  if (modalDropzone) {
+    ['dragenter', 'dragover'].forEach(eventName => {
+      modalDropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        modalDropzone.classList.add("dragover");
+      }, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      modalDropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        modalDropzone.classList.remove("dragover");
+      }, false);
+    });
+
+    modalDropzone.addEventListener('drop', (e) => {
+      const dt = e.dataTransfer;
+      const files = dt.files;
+      if (files && files.length > 0) {
+        processModalReceiptFile(files[0]);
+      }
     }, false);
-  });
-
-  dropzone.addEventListener('drop', (e) => {
-    const dt = e.dataTransfer;
-    const files = dt.files;
-    if (files && files.length > 0) {
-      processReceiptFile(files[0]);
-    }
-  }, false);
+  }
 
   // Hỗ trợ Paste ảnh chụp màn hình (Ctrl + V)
   window.addEventListener('paste', (e) => {
+    const createModal = document.getElementById("createPolicyModal");
+    const step2 = document.getElementById("policyStep2Section");
+    if (createModal && createModal.style.display !== "none" && step2 && step2.style.display !== "none") {
+      const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+      if (!items) return;
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.kind === 'file' && item.type.startsWith('image/')) {
+          const blob = item.getAsFile();
+          processModalReceiptFile(blob);
+          break;
+        }
+      }
+      return;
+    }
+
     const payTab = document.getElementById("tab-pay-premium");
-    if (!payTab || !payTab.classList.contains("active")) return;
-    const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-    if (!items) return;
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      if (item.kind === 'file' && item.type.startsWith('image/')) {
-        const blob = item.getAsFile();
-        processReceiptFile(blob);
-        break;
+    if (payTab && payTab.classList.contains("active")) {
+      const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+      if (!items) return;
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.kind === 'file' && item.type.startsWith('image/')) {
+          const blob = item.getAsFile();
+          processReceiptFile(blob);
+          break;
+        }
       }
     }
   });
