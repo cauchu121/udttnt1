@@ -140,6 +140,7 @@ class PaymentCreate(BaseModel):
     period_name: str
     amount: float
     payment_method: str = "BANK_TRANSFER"
+    receipt_image: Optional[str] = None
 
 class PaymentResponse(BaseModel):
     id: int
@@ -152,6 +153,7 @@ class PaymentResponse(BaseModel):
     payment_method: str
     payment_date: datetime.datetime
     status: str
+    receipt_image: Optional[str] = None
     created_at: datetime.datetime
 
     class Config:

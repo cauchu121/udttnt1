@@ -54,7 +54,8 @@ def make_payment(
         amount=payment_in.amount,
         payment_method=payment_in.payment_method,
         payment_date=datetime.datetime.utcnow(),
-        status="PAID"
+        status="PAID",
+        receipt_image=payment_in.receipt_image
     )
     db.add(new_payment)
 

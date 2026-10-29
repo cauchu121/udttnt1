@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-  <link rel="stylesheet" href="styles.css?v=2.1">
+  <link rel="stylesheet" href="styles.css?v=2.2">
 </head>
 <body>
 
@@ -451,10 +451,62 @@
                   <span class="qr-tag">VietQR Pro 24/7</span>
                 </div>
 
-                <!-- QR Code Box -->
-                <div class="qr-image-wrapper">
-                  <img id="qrDisplayImage" src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=INSURTECH-PAYMENT" alt="Mã QR thanh toán" class="qr-img">
-                  <div class="qr-center-icon"><i class="bi bi-shield-fill-check text-success"></i></div>
+                <!-- QR Code & Upload Biên Lai Chuyển Khoản (Bên cạnh nhau) -->
+                <div class="qr-and-upload-row">
+                  <!-- Cột Trái: Mã QR Thanh Toán -->
+                  <div class="qr-col">
+                    <div class="media-col-header">
+                      <i class="bi bi-qr-code text-primary"></i> <span>Mã QR Thanh Toán</span>
+                    </div>
+                    <div class="qr-image-wrapper">
+                      <img id="qrDisplayImage" src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=INSURTECH-PAYMENT" alt="Mã QR thanh toán" class="qr-img">
+                      <div class="qr-center-icon"><i class="bi bi-shield-fill-check text-success"></i></div>
+                    </div>
+                    <small class="media-col-note"><i class="bi bi-phone"></i> Quét mã qua App Ngân hàng</small>
+                  </div>
+
+                  <!-- Cột Phải: Tải Ảnh Biên Lai / Hóa Đơn Chuyển Khoản (Bên Cạnh Mã QR) -->
+                  <div class="receipt-upload-col">
+                    <div class="media-col-header">
+                      <i class="bi bi-receipt text-success"></i> <span>Tải Ảnh Biên Lai Giao Dịch</span>
+                    </div>
+                    
+                    <div class="receipt-dropzone" id="receiptDropzone" onclick="triggerReceiptFileInput()">
+                      <input type="file" id="payReceiptFileInput" accept="image/*" style="display: none;" onchange="handleReceiptFileSelect(event)">
+                      
+                      <!-- Chưa chọn ảnh -->
+                      <div class="dropzone-empty" id="receiptDropzoneEmpty">
+                        <div class="upload-icon-circle">
+                          <i class="bi bi-cloud-arrow-up-fill"></i>
+                        </div>
+                        <strong>Tải Ảnh Biên Lai</strong>
+                        <p>Nhấp chọn ảnh hoặc kéo thả ảnh chụp bill chuyển khoản vào đây</p>
+                        <span class="upload-tip-pill"><i class="bi bi-image"></i> Hỗ trợ PNG, JPG, JPEG</span>
+                      </div>
+
+                      <!-- Đã tải ảnh lên (Preview) -->
+                      <div class="dropzone-preview" id="receiptDropzonePreview" style="display: none;">
+                        <div class="preview-img-container">
+                          <img id="receiptPreviewThumb" src="" alt="Ảnh biên lai" class="preview-thumb-img">
+                          <div class="preview-overlay">
+                            <button type="button" class="btn-preview-zoom" onclick="event.stopPropagation(); viewReceiptZoom();" title="Xem ảnh phóng to">
+                              <i class="bi bi-zoom-in"></i> Phóng to
+                            </button>
+                          </div>
+                        </div>
+                        <div class="preview-meta">
+                          <div class="preview-file-name" id="receiptPreviewName">bienlai.png</div>
+                          <span class="badge badge-success" style="font-size: 10px; padding: 2px 6px;"><i class="bi bi-check2-circle"></i> Đã chọn</span>
+                        </div>
+                        <div class="preview-actions">
+                          <button type="button" class="btn btn-xs btn-outline-danger" onclick="event.stopPropagation(); removeReceiptImage();">
+                            <i class="bi bi-trash"></i> Đổi ảnh khác
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    <small class="media-col-note"><i class="bi bi-shield-check text-success"></i> Đính kèm minh chứng đóng phí</small>
+                  </div>
                 </div>
 
                 <div class="vietqr-details mt-3 text-start">
@@ -473,6 +525,12 @@
                   <div class="qr-detail-row">
                     <span class="text-muted">Nội dung chuyển khoản:</span>
                     <code class="qr-transfer-memo" id="qrDisplayMemo">DONGPHI POL-2026-HLT-001</code>
+                  </div>
+                  <div class="qr-detail-row">
+                    <span class="text-muted">Biên lai đính kèm:</span>
+                    <span id="qrDetailReceiptStatus" class="text-muted" style="font-size: 12px;">
+                      <i class="bi bi-dash-circle"></i> Chưa đính kèm (không bắt buộc)
+                    </span>
                   </div>
                 </div>
               </div>
@@ -508,6 +566,7 @@
                     <th>Phương Thức</th>
                     <th>Ngày Thanh Toán</th>
                     <th>Trạng Thái</th>
+                    <th>Biên Lai</th>
                   </tr>
                 </thead>
                 <tbody id="paymentsTableBody">
@@ -1072,9 +1131,39 @@
     </div>
   </div>
 
+  <!-- MODAL: XEM ẢNH BIÊN LAI THANH TOÁN -->
+  <div class="modal-overlay" id="receiptViewModal">
+    <div class="modal-dialog modal-md">
+      <div class="modal-header modal-header-green">
+        <div class="header-title-group">
+          <i class="bi bi-receipt-cutoff"></i>
+          <div>
+            <h3 id="receiptModalTitle">Biên Lai Chuyển Khoản Đóng Phí</h3>
+            <small id="receiptModalSubtitle">Minh chứng giao dịch thanh toán thành công</small>
+          </div>
+        </div>
+        <button class="btn-close" onclick="closeReceiptModal()">&times;</button>
+      </div>
+      <div class="modal-body text-center p-3">
+        <div class="receipt-modal-img-wrap" style="max-height: 460px; overflow-y: auto; border-radius: 8px; border: 1px solid #e2e8f0; background: #f8fafc; padding: 10px;">
+          <img id="receiptModalImg" src="" alt="Ảnh biên lai" style="max-width: 100%; max-height: 440px; height: auto; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.12);">
+        </div>
+        <div class="receipt-modal-info mt-3 text-start p-3 bg-light rounded" id="receiptModalDetails" style="font-size: 13px;">
+          <!-- Injected via JavaScript -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeReceiptModal()">Đóng</button>
+        <a id="btnDownloadReceipt" href="#" download="bien_lai_dong_phi.png" class="btn btn-primary">
+          <i class="bi bi-download"></i> Tải Ảnh Về Máy
+        </a>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Notification Container -->
   <div class="toast-container" id="toastContainer"></div>
 
-  <script src="app.js?v=2.1"></script>
+  <script src="app.js?v=2.2"></script>
 </body>
 </html>

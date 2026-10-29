@@ -114,6 +114,7 @@ class PremiumPayment(Base):
     payment_method = Column(String(50), default="BANK_TRANSFER") # BANK_TRANSFER, MOMO, VNPAY, CASH
     payment_date = Column(DateTime, default=datetime.datetime.utcnow)
     status = Column(String(50), default="PAID") # PAID, OVERDUE, PENDING
+    receipt_image = Column(Text, nullable=True) # Base64 hoặc URL ảnh biên lai chuyển khoản
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
     # Relationships

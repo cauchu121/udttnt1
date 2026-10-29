@@ -1668,6 +1668,190 @@ function askAiAboutThisProduct() {
 // =============================================================================
 let cachedPayPolicies = [];
 let currentPaymentMethod = "BANK_TRANSFER";
+let currentReceiptBase64 = null;
+let currentReceiptFileName = "";
+let cachedPaymentList = [];
+
+function triggerReceiptFileInput() {
+  const input = document.getElementById("payReceiptFileInput");
+  if (input) input.click();
+}
+
+function handleReceiptFileSelect(event) {
+  const file = event.target.files ? event.target.files[0] : null;
+  if (!file) return;
+  processReceiptFile(file);
+}
+
+function processReceiptFile(file) {
+  if (!file.type.startsWith("image/")) {
+    showToast("Vui lòng chọn file hình ảnh (PNG, JPG, JPEG)!", "error");
+    return;
+  }
+  if (file.size > 10 * 1024 * 1024) {
+    showToast("Dung lượng ảnh vượt quá 10MB!", "error");
+    return;
+  }
+
+  currentReceiptFileName = file.name;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    currentReceiptBase64 = e.target.result;
+    displayReceiptPreview(currentReceiptBase64, file.name, file.size);
+  };
+  reader.readAsDataURL(file);
+}
+
+function displayReceiptPreview(base64Data, fileName, fileSize) {
+  const emptyBox = document.getElementById("receiptDropzoneEmpty");
+  const previewBox = document.getElementById("receiptDropzonePreview");
+  const thumbImg = document.getElementById("receiptPreviewThumb");
+  const nameEl = document.getElementById("receiptPreviewName");
+  const statusEl = document.getElementById("qrDetailReceiptStatus");
+
+  if (emptyBox) emptyBox.style.display = "none";
+  if (previewBox) previewBox.style.display = "flex";
+  if (thumbImg) thumbImg.src = base64Data;
+  if (nameEl) nameEl.textContent = fileName || "bien_lai.png";
+  if (statusEl) {
+    statusEl.innerHTML = `<span class="badge badge-success"><i class="bi bi-check-circle-fill"></i> Đã đính kèm ảnh</span>`;
+  }
+  showToast("Đã tải ảnh biên lai thành công!", "success");
+}
+
+function removeReceiptImage() {
+  currentReceiptBase64 = null;
+  currentReceiptFileName = "";
+  const input = document.getElementById("payReceiptFileInput");
+  if (input) input.value = "";
+
+  const emptyBox = document.getElementById("receiptDropzoneEmpty");
+  const previewBox = document.getElementById("receiptDropzonePreview");
+  const thumbImg = document.getElementById("receiptPreviewThumb");
+  const statusEl = document.getElementById("qrDetailReceiptStatus");
+
+  if (emptyBox) emptyBox.style.display = "flex";
+  if (previewBox) previewBox.style.display = "none";
+  if (thumbImg) thumbImg.src = "";
+  if (statusEl) {
+    statusEl.innerHTML = `<i class="bi bi-dash-circle"></i> Chưa đính kèm (không bắt buộc)`;
+  }
+}
+
+function viewReceiptZoom() {
+  if (!currentReceiptBase64) return;
+  const modal = document.getElementById("receiptViewModal");
+  const img = document.getElementById("receiptModalImg");
+  const title = document.getElementById("receiptModalTitle");
+  const subtitle = document.getElementById("receiptModalSubtitle");
+  const details = document.getElementById("receiptModalDetails");
+  const btnDownload = document.getElementById("btnDownloadReceipt");
+
+  if (title) title.textContent = "Xem Trước Biên Lai Thanh Toán";
+  if (subtitle) subtitle.textContent = currentReceiptFileName || "Ảnh chụp màn hình chuyển khoản";
+  if (img) img.src = currentReceiptBase64;
+  if (btnDownload) {
+    btnDownload.href = currentReceiptBase64;
+    btnDownload.download = currentReceiptFileName || "bien_lai.png";
+  }
+  if (details) {
+    const amountVal = document.getElementById("payAmountInput") ? document.getElementById("payAmountInput").value : "";
+    details.innerHTML = `
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        <div><strong>Tập tin:</strong> ${currentReceiptFileName || 'bien_lai.png'}</div>
+        <div><strong>Số tiền nộp:</strong> <span class="text-success fw-bold">${amountVal} VNĐ</span></div>
+        <div><strong>Trạng thái:</strong> <span class="text-primary">Đang chuẩn bị xác nhận đóng phí</span></div>
+      </div>
+    `;
+  }
+  if (modal) modal.style.display = "flex";
+}
+
+function viewPaymentReceiptById(paymentId) {
+  const pay = cachedPaymentList.find(p => p.id === paymentId);
+  if (!pay || !pay.receipt_image) {
+    showToast("Giao dịch này không có ảnh biên lai đính kèm.", "info");
+    return;
+  }
+  const modal = document.getElementById("receiptViewModal");
+  const img = document.getElementById("receiptModalImg");
+  const title = document.getElementById("receiptModalTitle");
+  const subtitle = document.getElementById("receiptModalSubtitle");
+  const details = document.getElementById("receiptModalDetails");
+  const btnDownload = document.getElementById("btnDownloadReceipt");
+
+  if (title) title.textContent = `Biên Lai Giao Dịch #${pay.payment_code}`;
+  const dStr = new Date(pay.payment_date).toLocaleDateString('vi-VN');
+  if (subtitle) subtitle.textContent = `Hợp đồng: ${pay.policy_number || ''} - Ngày nộp: ${dStr}`;
+  if (img) img.src = pay.receipt_image;
+  if (btnDownload) {
+    btnDownload.href = pay.receipt_image;
+    btnDownload.download = `bien_lai_${pay.payment_code}.png`;
+  }
+  if (details) {
+    details.innerHTML = `
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        <div><strong>Mã giao dịch:</strong> <span class="text-success">${pay.payment_code}</span></div>
+        <div><strong>Hợp đồng:</strong> <span class="text-primary">${pay.policy_number || ''}</span></div>
+        <div><strong>Số tiền:</strong> <span class="text-success fw-bold">${formatVND(pay.amount)}</span></div>
+        <div><strong>Kỳ nộp phí:</strong> ${pay.period_name}</div>
+        <div><strong>Phương thức:</strong> ${pay.payment_method}</div>
+        <div><strong>Thời gian ghi nhận:</strong> ${new Date(pay.payment_date).toLocaleString('vi-VN')}</div>
+      </div>
+    `;
+  }
+  if (modal) modal.style.display = "flex";
+}
+
+function closeReceiptModal() {
+  const modal = document.getElementById("receiptViewModal");
+  if (modal) modal.style.display = "none";
+}
+
+function initReceiptDropzoneListeners() {
+  const dropzone = document.getElementById("receiptDropzone");
+  if (!dropzone) return;
+
+  ['dragenter', 'dragover'].forEach(eventName => {
+    dropzone.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropzone.classList.add("dragover");
+    }, false);
+  });
+
+  ['dragleave', 'drop'].forEach(eventName => {
+    dropzone.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropzone.classList.remove("dragover");
+    }, false);
+  });
+
+  dropzone.addEventListener('drop', (e) => {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    if (files && files.length > 0) {
+      processReceiptFile(files[0]);
+    }
+  }, false);
+
+  // Hỗ trợ Paste ảnh chụp màn hình (Ctrl + V)
+  window.addEventListener('paste', (e) => {
+    const payTab = document.getElementById("tab-pay-premium");
+    if (!payTab || !payTab.classList.contains("active")) return;
+    const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+    if (!items) return;
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.kind === 'file' && item.type.startsWith('image/')) {
+        const blob = item.getAsFile();
+        processReceiptFile(blob);
+        break;
+      }
+    }
+  });
+}
 
 async function loadPayPremiumView() {
   const select = document.getElementById("payPolicySelect");
@@ -1836,7 +2020,8 @@ async function handlePayPremiumSubmit() {
         policy_id: policyId,
         period_name: period,
         amount: amount,
-        payment_method: currentPaymentMethod
+        payment_method: currentPaymentMethod,
+        receipt_image: currentReceiptBase64
       })
     });
 
@@ -1847,6 +2032,9 @@ async function handlePayPremiumSubmit() {
 
     const newPayment = await res.json();
     showToast(`Đóng phí thành công cho hợp đồng ${newPayment.policy_number || ''}! Mã giao dịch: ${newPayment.payment_code}`, "success");
+
+    // Xóa ảnh biên lai sau khi gửi thành công
+    removeReceiptImage();
 
     // Tự động chuyển sang tab Lịch sử đóng phí để hiển thị giao dịch mới
     setTimeout(() => {
@@ -1870,6 +2058,7 @@ async function loadPayments() {
       headers: { "Authorization": `Bearer ${currentToken}` }
     });
     const payments = await res.json();
+    cachedPaymentList = payments;
     const tbody = document.getElementById("paymentsTableBody");
     tbody.innerHTML = "";
 
@@ -1877,7 +2066,7 @@ async function loadPayments() {
       const msg = currentUser.role === "customer" 
         ? "Bạn chưa có kỳ nộp phí nào cần thanh toán."
         : "Chưa có giao dịch thu phí nào trong hệ thống.";
-      tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-muted">${msg}</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-muted">${msg}</td></tr>`;
       return;
     }
 
@@ -1893,6 +2082,10 @@ async function loadPayments() {
       const polNum = pay.policy_number || (`POL-${pay.policy_id.toString().padStart(3, '0')}`);
       const custInfo = pay.customer_name ? `<br><small class="text-muted"><i class="bi bi-person"></i> ${pay.customer_name}</small>` : '';
 
+      const receiptBtn = pay.receipt_image
+        ? `<button type="button" class="btn-table-receipt" onclick="viewPaymentReceiptById(${pay.id})"><i class="bi bi-receipt"></i> Xem biên lai</button>`
+        : `<span class="text-muted" style="font-size: 11.5px;">-</span>`;
+
       tr.innerHTML = `
         <td><strong class="text-success">${pay.payment_code}</strong></td>
         <td><strong class="text-primary">${polNum}</strong>${custInfo}</td>
@@ -1901,6 +2094,7 @@ async function loadPayments() {
         <td><span class="badge badge-info">${methodName}</span></td>
         <td>${new Date(pay.payment_date).toLocaleDateString('vi-VN')}</td>
         <td><span class="status-pill status-approved">Đã thanh toán</span></td>
+        <td>${receiptBtn}</td>
       `;
       tbody.appendChild(tr);
     });
@@ -2241,6 +2435,7 @@ async function handleClaimSubmit() {
 // KHỞI TẠO: Mặc định điền thông tin tài khoản Giám định viên
 window.addEventListener("DOMContentLoaded", () => {
   selectRolePreset("officer", false);
+  initReceiptDropzoneListeners();
 
   window.addEventListener("click", (e) => {
     if (e.target.classList.contains("modal-overlay")) {
