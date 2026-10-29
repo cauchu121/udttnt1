@@ -827,6 +827,12 @@ body {
   align-items: center;
 }
 
+.filter-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .dashboard-row {
   display: flex;
   gap: 20px;
