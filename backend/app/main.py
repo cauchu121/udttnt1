@@ -27,6 +27,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Chống lưu bộ nhớ đệm (Cache-Busting) cho Frontend Static Files
+@app.middleware("http")
+async def add_no_cache_header(request: Request, call_next):
+    response = await call_next(request)
+    if not request.url.path.startswith("/api"):
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    return response
+
 # 1. Global Exception Handler bắt lỗi nhập liệu Form qua Pydantic
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
